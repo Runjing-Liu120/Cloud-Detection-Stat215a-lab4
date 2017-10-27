@@ -1,0 +1,6 @@
+*.ipynb_checkpoints
+
+*.bbl
+*.log
+*.ipynb_checkpoints
+*.txt
