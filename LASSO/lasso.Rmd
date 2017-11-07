@@ -1,0 +1,247 @@
+---
+title: "Exploring the lasso"
+author: "Bryan"
+date: "10/27/2107"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r load_data, cache = TRUE, echo = FALSE}
+library(knitr)
+library(tidyverse)
+library(glmnet)
+# load data
+image1 <- read.table('../image_data/image1.txt', header = F)
+image2 <- read.table('../image_data/image2.txt', header = F)
+image3 <- read.table('../image_data/image3.txt', header = F)
+
+# add column labels
+collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+names(image1) <- collabs
+names(image2) <- collabs
+names(image3) <- collabs
+
+```
+
+```{r load_utils, cache = FALSE, echo = FALSE}
+source('./lasso_lib.R')
+```
+
+# Fit using logistic regresssion
+```{r get_features, cache = TRUE}
+# get indices with labels
+image1_labeled_indx <- which(image1$label != 0)
+image2_labeled_indx <- which(image2$label != 0)
+
+# get the eight features
+image1_features <- as.matrix(image1[, -c(1,2,3)])
+image2_features <- as.matrix(image2[, -c(1,2,3)])
+
+image1_labels <- image1[, 3]
+image2_labels <- image2[, 3]
+
+X <- rbind(image1_features[image1_labeled_indx, ],
+                     image2_features[image2_labeled_indx, ])
+y <- c(image1_labels[image1_labeled_indx], 
+       image2_labels[image2_labeled_indx])
+y[y == -1] <- 0
+
+logist_fit <- glmnet(X, y, family = 'binomial', lambda = 0)
+```
+
+```{r plot_logistic_results, cache = TRUE}
+# get prediction probabilities
+image1_prediction_prob <- predict(logist_fit, 
+                              newx = image1_features,
+                              type = 'response')
+image2_prediction_prob <- predict(logist_fit, 
+                              newx = image2_features,
+                              type = 'response')
+
+# round for plotting
+image1_prediction <- 1.0 * (image1_prediction_prob > 0.6) + 
+  -1.0 * (image1_prediction_prob < 0.4) 
+
+image2_prediction <- 1.0 * (image2_prediction_prob > 0.6) + 
+  -1.0 * (image2_prediction_prob < 0.4) 
+
+image1_orig <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image1_pred <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                color = factor(image1_prediction))) +  
+  scale_color_discrete(name = "Predicted label")
+
+image2_orig <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image2_pred <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                color = factor(image2_prediction))) +  
+  scale_color_discrete(name = "Predicted label")
+
+source('./multiplot.R')
+multiplot(image1_orig, image2_orig, 
+          image1_pred, image2_pred, cols=2)
+
+```
+
+Print coefficients
+```{r}
+print(logist_fit$beta)
+```
+examine accuracy: 
+```{r get_logistic_accuracy, cache = TRUE}
+image1_prediction_ <- 1.0 * (image1_prediction_prob > 0.6) + 
+  -1.0 * (image1_prediction_prob <= 0.4) 
+
+image2_prediction_ <- 1.0 * (image2_prediction_prob > 0.6) + 
+  -1.0 * (image2_prediction_prob <= 0.4) 
+
+cat('on the labeled pixels of image 1: \n')
+print(mean(image1$label[image1_labeled_indx] ==
+  image1_prediction_[image1_labeled_indx]))
+
+cat('on the labeled pixels of image2: \n')
+print(mean(image2$label[image2_labeled_indx] ==
+  image2_prediction_[image2_labeled_indx]))
+
+```
+
+# Fit using LASSO 
+
+### examining the lasso path
+Here, we will explore cloud prediction using a lasso-logistic regression. First, we fit lasso using only the original 8 coefficients. Will we be able to recover the 3 engineered features? That is, will those 3 features (NDIR, CORR, SD) be found to be important? The lasso path is shown below: 
+```{r lasso_orig, cache = TRUE, echo = FALSE}
+
+# fit lasso and examine path
+X <- as.matrix(rbind(image1_features[image1_labeled_indx, ],
+                     image2_features[image2_labeled_indx, ]))
+y <- c(image1_labels[image1_labeled_indx], 
+       image2_labels[image2_labeled_indx])
+
+fit <- glmnet(X, y, family = "binomial")
+plot(fit, xvar = "lambda", label = TRUE)
+
+```
+As expected, feature 1, an engineered feature called NDIR becomes nonzero first. But what is feature 3 (CORR) doing?
+
+### fitting the model
+Here, we use 2-fold cross-validation (the two folds corresponding to the two images) to find $\lambda$ That is, we fit logistic-lasso using the first image for a range of $\lambda$. We then get the prediction accuracy (by simple mis-classifcation error) on the second image. We then reverse the roles of the two images in this procedure. The preditive accuracies are averaged, and plotted below as a function of $\lambda$. We then use the optimal $\lambda$ to fit on the entire dataset. 
+
+```{r lasso_orig_pred, cache = TRUE, echo = FALSE}
+fit_orig <- get_fit_2fold_cv(image1_features[image1_labeled_indx, ],
+                             image1_labels[image1_labeled_indx],
+                             image2_features[image2_labeled_indx, ], 
+                             image2_labels[image2_labeled_indx])
+```
+```{r lasso_orig_plots1, cache = TRUE, echo = FALSE}
+ggplot() + geom_point(aes(x = fit_orig$cv_results$lambda, 
+                          y = fit_orig$cv_results$accuracy)) + 
+  ylab('classification accuracy') + xlab('lambda') +
+  geom_vline(xintercept=fit_orig$cv_results$lambda_best)
+
+```
+
+At this value of lambda, we print the coefficients: 
+```{r}
+cat('coefficients: \n')
+print(fit_orig$fit$beta)
+```
+
+
+The result of this fit is shown below. Probabilities greater than 0.6 are labeled +1, probabilities less than 0.4 are labeled -1, and those in between are 0.  
+```{r plot_lasso_predictions, cache = TRUE}
+# get prediction probabilities
+image1_prediction_prob <- predict(fit_orig$fit, newx = image1_features, 
+                             s = fit_orig$cv_results$lambda_best,
+                             type = 'response')
+
+image2_prediction_prob <- predict(fit_orig$fit, newx = image2_features, 
+                             s = fit_orig$cv_results$lambda_best,
+                             type = 'response')
+# round for plotting
+image1_prediction <- 1.0 * (image1_prediction_prob > 0.6) + 
+  -1.0 * (image1_prediction_prob < 0.4) 
+
+image2_prediction <- 1.0 * (image2_prediction_prob > 0.6) + 
+  -1.0 * (image2_prediction_prob < 0.4) 
+
+image1_orig <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image1_pred <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                color = factor(image1_prediction))) +  
+  scale_color_discrete(name = "Predicted label")
+
+image2_orig <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image2_pred <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                color = factor(image2_prediction))) +  
+  scale_color_discrete(name = "Predicted label")
+
+source('./multiplot.R')
+multiplot(image1_orig, image2_orig, 
+          image1_pred, image2_pred, cols=2)
+
+
+```
+The final accuracy of our predictions: 
+```{r get_lasso_accuracy, cache = TRUE}
+image1_prediction_ <- 1.0 * (image1_prediction_prob > 0.6) + 
+  -1.0 * (image1_prediction_prob <= 0.4) 
+
+image2_prediction_ <- 1.0 * (image2_prediction_prob > 0.6) + 
+  -1.0 * (image2_prediction_prob <= 0.4) 
+
+cat('on the labeled pixels of image 1: \n')
+print(mean(image1$label[image1_labeled_indx] ==
+  image1_prediction_[image1_labeled_indx]))
+
+cat('on the labeled pixels of image2: \n')
+print(mean(image2$label[image2_labeled_indx] ==
+  image2_prediction_[image2_labeled_indx]))
+
+```
+Remarks: 
+1) Note that the prediction accuracy above is on the labeled pixels only. It appears that this algorithm often misclassifies 0 and 1. It is "unsure" less often than the expert. Questions: do we take into account the 0's in our prediction accuracy, or do we only care about those pixels where the expert was sure? Does it make sense to have one "true" class label be "unsure"?
+
+2) TODO: visually, it seems like doing some nearest neighbor smoothing will fix a lot of the problems ... 
+
+```{r}
+# get indices with labels
+image3_labeled_indx <- which(image3$label != 0)
+
+# get the eight features
+image3_features <- as.matrix(image3[, -c(1,2,3)])
+image3_labels <- image3[, 3]
+
+image3_prediction_prob <- predict(fit_orig$fit, newx = image3_features, 
+                             s = fit_orig$cv_results$lambda_best,
+                             type = 'response')
+
+image3_prediction <- 1.0 * (image3_prediction_prob > 0.6) + 
+  -1.0 * (image3_prediction_prob < 0.4) 
+
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction[image3_labeled_indx]))
+
+```
+
