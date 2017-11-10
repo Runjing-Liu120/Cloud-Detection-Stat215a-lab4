@@ -1,21 +1,9 @@
-
 #install.packages('e1071')
 
 library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(e1071)
-
-
-
-#Theme setup for plotting
-blank_theme <- theme_bw() +
-  theme(plot.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.border = element_blank(),
-        plot.title = element_text(size = 10), 
-        axis.title=element_text(size=10)
 
 
 # Get the data for three images
@@ -31,6 +19,7 @@ names(image2) <- collabs
 names(image3) <- collabs
 
 
+# Getting rid of zero labels and making them factors
 prep_image <- function(df){
   df$label <- as.factor(df$label)
   df <- df %>%
@@ -43,13 +32,17 @@ image2.prepped <- prep_image(image2)
 image3.prepped <- prep_image(image3)
 
 
+# Specifying the covariates (need to include label)
 col <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN', 'label')
+
 #s <- sample(115229, 5000)
+
+# Specifying train vs test set
 image_train <- image1.prepped[,col]
 image_test <- image2.prepped[,col]
 
 
-
+# Running the svm
 svm.model <- svm(label~., 
               data = image_train, 
               kernel = 'polynomial', 
@@ -62,11 +55,15 @@ print(svm.model)
 #plot(svm.model, image_train[,col]) #can only plot with two covariates
 
 
+# Tuning to figure out optimal cost
 tuned <- tune(svm, label~., 
               data = image_train, 
               kernel = 'polynomial',
               ranges = list(cost = c(0.001, 0.01, .1, 10, 100)))
 
+# Predicting on test set
 svm.predict <- predict(svm.model, image_test[,col], type = "class")
+
+# Results of prediction
 table(svm.predict, image_test[,9])
 mean(svm.predict == image_test[,9])
