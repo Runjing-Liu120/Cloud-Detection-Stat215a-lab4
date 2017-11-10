@@ -56,19 +56,16 @@ logist_fit <- glmnet(X, y, family = 'binomial', lambda = 0)
 
 ```{r plot_logistic_results, cache = TRUE}
 # get prediction probabilities
-image1_prediction_prob <- predict(logist_fit, 
+image1_prediction_prob_logistic <- predict(logist_fit, 
                               newx = image1_features,
                               type = 'response')
-image2_prediction_prob <- predict(logist_fit, 
+image2_prediction_prob_logistic <- predict(logist_fit, 
                               newx = image2_features,
                               type = 'response')
 
 # round for plotting
-image1_prediction <- 1.0 * (image1_prediction_prob > 0.6) + 
-  -1.0 * (image1_prediction_prob < 0.4) 
-
-image2_prediction <- 1.0 * (image2_prediction_prob > 0.6) + 
-  -1.0 * (image2_prediction_prob < 0.4) 
+image1_prediction_logistic <- get_labels_from_prob(image1_prediction_prob_logistic) 
+image2_prediction_logistic <- get_labels_from_prob(image2_prediction_prob_logistic) 
 
 image1_orig <- 
   ggplot(image1) + geom_point(aes(x = x, y = y, 
@@ -77,7 +74,7 @@ image1_orig <-
 
 image1_pred <- 
   ggplot(image1) + geom_point(aes(x = x, y = y, 
-                                color = factor(image1_prediction))) +  
+                                color = factor(image1_prediction_logistic))) +  
   scale_color_discrete(name = "Predicted label")
 
 image2_orig <- 
@@ -87,7 +84,7 @@ image2_orig <-
 
 image2_pred <- 
   ggplot(image2) + geom_point(aes(x = x, y = y, 
-                                color = factor(image2_prediction))) +  
+                                color = factor(image2_prediction_logistic))) +  
   scale_color_discrete(name = "Predicted label")
 
 source('./multiplot.R')
@@ -96,25 +93,19 @@ multiplot(image1_orig, image2_orig,
 
 ```
 
-Print coefficients
+Print coefficients: 
 ```{r}
 print(logist_fit$beta)
 ```
 examine accuracy: 
 ```{r get_logistic_accuracy, cache = TRUE}
-image1_prediction_ <- 1.0 * (image1_prediction_prob > 0.6) + 
-  -1.0 * (image1_prediction_prob <= 0.4) 
-
-image2_prediction_ <- 1.0 * (image2_prediction_prob > 0.6) + 
-  -1.0 * (image2_prediction_prob <= 0.4) 
-
 cat('on the labeled pixels of image 1: \n')
 print(mean(image1$label[image1_labeled_indx] ==
-  image1_prediction_[image1_labeled_indx]))
+  image1_prediction_logistic[image1_labeled_indx]))
 
 cat('on the labeled pixels of image2: \n')
 print(mean(image2$label[image2_labeled_indx] ==
-  image2_prediction_[image2_labeled_indx]))
+  image2_prediction_logistic[image2_labeled_indx]))
 
 ```
 
@@ -154,7 +145,7 @@ ggplot() + geom_point(aes(x = fit_orig$cv_results$lambda,
 ```
 
 At this value of lambda, we print the coefficients: 
-```{r}
+```{r, cahce = TRUE}
 cat('coefficients: \n')
 print(fit_orig$fit$beta)
 ```
@@ -163,19 +154,16 @@ print(fit_orig$fit$beta)
 The result of this fit is shown below. Probabilities greater than 0.6 are labeled +1, probabilities less than 0.4 are labeled -1, and those in between are 0.  
 ```{r plot_lasso_predictions, cache = TRUE}
 # get prediction probabilities
-image1_prediction_prob <- predict(fit_orig$fit, newx = image1_features, 
+image1_prediction_prob_lasso_orig <- predict(fit_orig$fit, newx = image1_features, 
                              s = fit_orig$cv_results$lambda_best,
                              type = 'response')
 
-image2_prediction_prob <- predict(fit_orig$fit, newx = image2_features, 
+image2_prediction_prob_lasso_orig <- predict(fit_orig$fit, newx = image2_features, 
                              s = fit_orig$cv_results$lambda_best,
                              type = 'response')
 # round for plotting
-image1_prediction <- 1.0 * (image1_prediction_prob > 0.6) + 
-  -1.0 * (image1_prediction_prob < 0.4) 
-
-image2_prediction <- 1.0 * (image2_prediction_prob > 0.6) + 
-  -1.0 * (image2_prediction_prob < 0.4) 
+image1_prediction_lasso_orig <- get_labels_from_prob(image1_prediction_prob_lasso_orig)
+image2_prediction_lasso_orig <- get_labels_from_prob(image2_prediction_prob_lasso_orig)
 
 image1_orig <- 
   ggplot(image1) + geom_point(aes(x = x, y = y, 
@@ -184,7 +172,7 @@ image1_orig <-
 
 image1_pred <- 
   ggplot(image1) + geom_point(aes(x = x, y = y, 
-                                color = factor(image1_prediction))) +  
+                                color = factor(image1_prediction_lasso_orig))) +  
   scale_color_discrete(name = "Predicted label")
 
 image2_orig <- 
@@ -194,7 +182,7 @@ image2_orig <-
 
 image2_pred <- 
   ggplot(image2) + geom_point(aes(x = x, y = y, 
-                                color = factor(image2_prediction))) +  
+                                color = factor(image2_prediction_lasso_orig))) +  
   scale_color_discrete(name = "Predicted label")
 
 source('./multiplot.R')
@@ -205,19 +193,13 @@ multiplot(image1_orig, image2_orig,
 ```
 The final accuracy of our predictions: 
 ```{r get_lasso_accuracy, cache = TRUE}
-image1_prediction_ <- 1.0 * (image1_prediction_prob > 0.6) + 
-  -1.0 * (image1_prediction_prob <= 0.4) 
-
-image2_prediction_ <- 1.0 * (image2_prediction_prob > 0.6) + 
-  -1.0 * (image2_prediction_prob <= 0.4) 
-
 cat('on the labeled pixels of image 1: \n')
 print(mean(image1$label[image1_labeled_indx] ==
-  image1_prediction_[image1_labeled_indx]))
+  image1_prediction_lasso_orig[image1_labeled_indx]))
 
 cat('on the labeled pixels of image2: \n')
 print(mean(image2$label[image2_labeled_indx] ==
-  image2_prediction_[image2_labeled_indx]))
+  image2_prediction_lasso_orig[image2_labeled_indx]))
 
 ```
 Remarks: 
@@ -225,7 +207,9 @@ Remarks:
 
 2) TODO: visually, it seems like doing some nearest neighbor smoothing will fix a lot of the problems ... 
 
-```{r}
+
+The accuracy on test data ... 
+```{r, cache = TRUE}
 # get indices with labels
 image3_labeled_indx <- which(image3$label != 0)
 
@@ -233,15 +217,139 @@ image3_labeled_indx <- which(image3$label != 0)
 image3_features <- as.matrix(image3[, -c(1,2,3)])
 image3_labels <- image3[, 3]
 
-image3_prediction_prob <- predict(fit_orig$fit, newx = image3_features, 
+image3_prediction_prob_lasso_orig <- predict(fit_orig$fit, newx = image3_features, 
                              s = fit_orig$cv_results$lambda_best,
                              type = 'response')
 
-image3_prediction <- 1.0 * (image3_prediction_prob > 0.6) + 
-  -1.0 * (image3_prediction_prob < 0.4) 
+image3_prediction_lasso_orig <-get_labels_from_prob(image3_prediction_prob_lasso_orig)
 
+print('test accuracy on held out third image: ')
 print(mean(image3$label[image3_labeled_indx] ==
-  image3_prediction[image3_labeled_indx]))
+  image3_prediction_lasso_orig[image3_labeled_indx]))
+
+```
+```{r, cache = TRUE}
+image3_orig <- 
+  ggplot(image3) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image3_pred <- 
+  ggplot(image3) + geom_point(aes(x = x, y = y, 
+                                color = factor(image3_prediction_lasso_orig))) +  
+  scale_color_discrete(name = "Predicted label")
+
+multiplot(image3_orig, image3_pred, cols=2)
+
+```
+
+# Lets try to smooth the features
+We smooth the features using K-nearest-neighbors. We also add interaction terms. 
+```{r}
+source('./smoothing_fun.R')
+# add second order interactions
+image1_poly_features <- add_interaction_terms(image1[, -c(1,2,3)])
+image1_poly_features_smoothed <- smooth_all_features(image1_poly_features, 
+                                                     coord = image1[, 1:2])
+image1_poly_features_smoothed <- as.matrix(image1_poly_features_smoothed)
+# smooth features
+image2_poly_features <- add_interaction_terms(image2[, -c(1,2,3)])
+image2_poly_features_smoothed <- smooth_all_features(image2_poly_features, 
+                                                     coord = image2[, 1:2], 
+                                                     k = 24)
+image2_poly_features_smoothed <- as.matrix(image2_poly_features_smoothed)
+
+
+fit_poly_smooth <- get_fit_2fold_cv(
+                            image1_poly_features_smoothed[image1_labeled_indx, ],
+                             image1_labels[image1_labeled_indx],
+                             image2_poly_features_smoothed[image2_labeled_indx, ], 
+                             image2_labels[image2_labeled_indx])
+
+ggplot() + geom_point(aes(x = fit_orig$cv_results$lambda, 
+                          y = fit_orig$cv_results$accuracy)) + 
+  ylab('classification accuracy') + xlab('lambda') +
+  geom_vline(xintercept=fit_orig$cv_results$lambda_best)
+
+```
+The coefficients in this case ... 
+```{r, cahce = TRUE}
+cat('coefficients: \n')
+print(fit_poly_smooth$fit$beta)
+```
+
+```{r plot_lasso_predictions, cache = TRUE}
+# get prediction probabilities
+image1_prediction_prob_lasso_smo <- predict(fit_poly_smooth$fit, 
+                            newx = image1_poly_features_smoothed, 
+                             s = fit_poly_smooth$cv_results$lambda_best,
+                             type = 'response')
+
+image2_prediction_prob_lasso_smo <- predict(fit_poly_smooth$fit, 
+                            newx = image2_poly_features_smoothed, 
+                             s = fit_poly_smooth$cv_results$lambda_best,
+                             type = 'response')
+# round for plotting
+image1_prediction_lasso_smo <- get_labels_from_prob(image1_prediction_prob_lasso_smo)
+image2_prediction_lasso_smo <- get_labels_from_prob(image2_prediction_prob_lasso_smo)
+
+image1_orig <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image1_pred <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                color = factor(image1_prediction_lasso_smo))) +  
+  scale_color_discrete(name = "Predicted label")
+
+image2_orig <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image2_pred <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                color = factor(image2_prediction_lasso_smo))) +  
+  scale_color_discrete(name = "Predicted label")
+
+source('./multiplot.R')
+multiplot(image1_orig, image2_orig, 
+          image1_pred, image2_pred, cols=2)
+
+
+```
+
+The final accuracy of our predictions: 
+```{r get_lasso_accuracy, cache = TRUE}
+cat('on the labeled pixels of image 1: \n')
+print(mean(image1$label[image1_labeled_indx] ==
+  image1_prediction_lasso_smo[image1_labeled_indx]))
+
+cat('on the labeled pixels of image2: \n')
+print(mean(image2$label[image2_labeled_indx] ==
+  image2_prediction_lasso_smo[image2_labeled_indx]))
+
+# get indices with labels
+image3_labeled_indx <- which(image3$label != 0)
+
+# add second order interactions
+image3_poly_features <- add_interaction_terms(image3[, -c(1,2,3)])
+image3_poly_features_smoothed <- smooth_all_features(image3_poly_features, 
+                                                     coord = image3[, 1:2])
+image3_poly_features_smoothed <- as.matrix(image3_poly_features_smoothed)
+
+image3_labels <- image3[, 3]
+image3_prediction_prob_lasso_orig <- predict(fit_poly_smooth$fit, 
+                              newx =image3_poly_features_smoothed, 
+                             s = fit_poly_smooth$cv_results$lambda_best,
+                             type = 'response')
+
+image3_prediction_lasso_orig <-get_labels_from_prob(image3_prediction_prob_lasso_orig)
+
+print('test accuracy on held out third image: ')
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction_lasso_orig[image3_labeled_indx]))
 
 ```
 
