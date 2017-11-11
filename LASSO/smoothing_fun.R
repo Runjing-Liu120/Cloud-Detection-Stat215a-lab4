@@ -34,7 +34,7 @@ add_interaction_terms <- function(X, deg = 2){
   n_features <- length(feature_names)
   for(i in 1:n_features){
     for(j in 1:i){
-      features[[paste(feature_names[i], feature_names[j], sep = '-')]] <- 
+      features[[paste(feature_names[i], feature_names[j], sep = '_')]] <- 
         X[, i] * X[, j]
     }
   }
