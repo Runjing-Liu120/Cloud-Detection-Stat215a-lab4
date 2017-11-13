@@ -37,13 +37,16 @@ source('./lasso_lib.R')
 # get indices with labels
 image1_labeled_indx <- which(image1$label != 0)
 image2_labeled_indx <- which(image2$label != 0)
+image3_labeled_indx <- which(image3$label != 0)
 
 # get the eight features
 image1_features <- as.matrix(image1[, -c(1,2,3)])
 image2_features <- as.matrix(image2[, -c(1,2,3)])
+image3_features <- as.matrix(image3[, -c(1,2,3)])
 
 image1_labels <- image1[, 3]
 image2_labels <- image2[, 3]
+image3_labels <- image3[, 3]
 
 X <- rbind(image1_features[image1_labeled_indx, ],
                      image2_features[image2_labeled_indx, ])
@@ -62,10 +65,14 @@ image1_prediction_prob_logistic <- predict(logist_fit,
 image2_prediction_prob_logistic <- predict(logist_fit, 
                               newx = image2_features,
                               type = 'response')
+image3_prediction_prob_logistic <- predict(logist_fit, 
+                              newx = image3_features,
+                              type = 'response')
 
 # round for plotting
 image1_prediction_logistic <- get_labels_from_prob(image1_prediction_prob_logistic) 
 image2_prediction_logistic <- get_labels_from_prob(image2_prediction_prob_logistic) 
+image3_prediction_logistic <- get_labels_from_prob(image3_prediction_prob_logistic) 
 
 image1_orig <- 
   ggplot(image1) + geom_point(aes(x = x, y = y, 
@@ -106,6 +113,11 @@ print(mean(image1$label[image1_labeled_indx] ==
 cat('on the labeled pixels of image2: \n')
 print(mean(image2$label[image2_labeled_indx] ==
   image2_prediction_logistic[image2_labeled_indx]))
+
+cat('on the labeled pixels of image3: \n')
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction_logistic[image3_labeled_indx]))
+
 
 ```
 

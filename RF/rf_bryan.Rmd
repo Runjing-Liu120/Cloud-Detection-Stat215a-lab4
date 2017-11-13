@@ -37,12 +37,13 @@ source('../LASSO/lasso_lib.R')
 ```
 
 # Fit using random forest
-We fit a random forest to image 1, and examine the predictive accuracy on the second image. 
+We fit a random forest to image 2 and 3, and examine the predictive accuracy on the third image. 
 
 ```{r get_features, cache = TRUE}
 # get indices with labels
 image1_labeled_indx <- which(image1$label != 0)
 image2_labeled_indx <- which(image2$label != 0)
+
 
 feature_names <- colnames(image1)[3:dim(image1)[2]]
 
@@ -50,8 +51,11 @@ image1_labeled <- image1[image1_labeled_indx, feature_names]
 image2_labeled <- image2[image2_labeled_indx, feature_names]
 
 image1_labeled$label <- as.factor(image1_labeled$label)
+image2_labeled$label <- as.factor(image2_labeled$label)
 
-rf_fit_orig <- ranger(label ~ ., data = image1_labeled, 
+training_image <- rbind(image1_labeled, image2_labeled)
+
+rf_fit_orig <- ranger(label ~ ., data = training_image, 
                  num.trees = 500, 
                  probability = TRUE, 
                  importance = 'impurity')
@@ -59,6 +63,11 @@ rf_fit_orig <- ranger(label ~ ., data = image1_labeled,
 
 We print the predictive accuracy: 
 ```{r, cache = TRUE}
+image3_labeled_indx <- which(image3$label != 0)
+image3_labeled <- image3[image3_labeled_indx, feature_names]
+image3_labeled$label <- as.factor(image3_labeled$label)
+
+
 # predict on image1
 image1_prediction_prob_rf <- predict(rf_fit_orig, 
                               dat = image1_labeled, 
@@ -74,12 +83,21 @@ image2_prediction_prob_rf <- predict(rf_fit_orig,
 
 image2_prediction_rf <- get_labels_from_prob(image2_prediction_prob_rf$predictions[, 2])
 
+# predict on image3
+image3_prediction_prob_rf <- predict(rf_fit_orig, 
+                              dat = image3_labeled, 
+                              type = 'response')
+
+image3_prediction_rf <- get_labels_from_prob(image3_prediction_prob_rf$predictions[, 2])
+
 cat('Predictive accuracy on the label pixels of image 1: \n')
-cat('note that image 1 was used to fit the RF: \n')
 print(mean(image1$label[image1_labeled_indx] == image1_prediction_rf))
 
 cat('predictive accuracy on the labeled pixels of image 2: \n')
 print(mean(image2$label[image2_labeled_indx] == image2_prediction_rf))
+
+cat('predictive accuracy on the labeled pixels of image 3: \n')
+print(mean(image3$label[image3_labeled_indx] == image3_prediction_rf))
 
 ```
 And look at feature importances
@@ -95,9 +113,11 @@ We smooth the features using K-nearest-neighbors. We also add second order inter
 # add second order interactions -- only add interactions for the non-engineered features
 image1_poly_features <- add_interaction_terms(image1[, -c(1:6)])
 image2_poly_features <- add_interaction_terms(image2[, -c(1:6)])
+image3_poly_features <- add_interaction_terms(image3[, -c(1:6)])
 
 image1_poly_features <- cbind(image1[, 4:6], image1_poly_features)
 image2_poly_features <- cbind(image2[, 4:6], image2_poly_features)
+image3_poly_features <- cbind(image3[, 4:6], image3_poly_features)
 
 
 # smooth all features 
@@ -107,6 +127,10 @@ image1_poly_features_smoothed <- smooth_all_features(image1_poly_features,
 image2_poly_features_smoothed <- smooth_all_features(image2_poly_features, 
                                                      coord = image2[, 1:2], 
                                                      k = 24)
+image3_poly_features_smoothed <- smooth_all_features(image3_poly_features, 
+                                                     coord = image3[, 1:2], 
+                                                     k = 24)
+
 n_features <- dim(image1_poly_features_smoothed)[2]
 
 # create full dataframe
@@ -117,6 +141,10 @@ colnames(image1_data_features_smoothed)[1] <- 'label'
 image2_data_features_smoothed <- cbind(as.factor(image2$label),
                                        image2_poly_features_smoothed)
 colnames(image2_data_features_smoothed)[1] <- 'label'
+
+image3_data_features_smoothed <- cbind(as.factor(image3$label),
+                                       image3_poly_features_smoothed)
+colnames(image3_data_features_smoothed)[1] <- 'label'
 
 # this is so fucking annoying ... 
 image1_data_features_smoothed_labeled <-
@@ -129,9 +157,16 @@ image2_data_features_smoothed_labeled <-
 image2_data_features_smoothed_labeled$label <- droplevels(
   image2_data_features_smoothed_labeled$label)
 
+image3_data_features_smoothed_labeled <-
+  image3_data_features_smoothed[image3_labeled_indx, ]
+image3_data_features_smoothed_labeled$label <- droplevels(
+  image3_data_features_smoothed_labeled$label)
+
+training_data_smoothed <- rbind(image1_data_features_smoothed_labeled,
+                                image2_data_features_smoothed_labeled)
 
 rf_fit_smo <- ranger(label ~ ., 
-                data = image1_data_features_smoothed_labeled, 
+                data = training_data_smoothed, 
                  num.trees = 500, 
                  probability = TRUE, 
                  importance = 'impurity')
@@ -155,6 +190,15 @@ image2_prediction_prob_rf_smo <- predict(rf_fit_smo,
 image2_prediction_rf_smo <-
   get_labels_from_prob(image2_prediction_prob_rf$predictions[, 2])
 
+# predict on image 3
+image3_prediction_prob_rf_smo <- predict(rf_fit_smo, 
+                              dat = image3_data_features_smoothed_labeled, 
+                              type = 'response')
+
+image3_prediction_rf_smo <-
+  get_labels_from_prob(image3_prediction_prob_rf$predictions[, 2])
+
+
 cat('Predictive accuracy on the label pixels of image 1: \n')
 cat('note that image 1 was used to fit the RF: \n')
 print(mean(image1$label[image1_labeled_indx] == image1_prediction_rf_smo))
@@ -162,12 +206,19 @@ print(mean(image1$label[image1_labeled_indx] == image1_prediction_rf_smo))
 cat('predictive accuracy on the labeled pixels of image 2: \n')
 print(mean(image2$label[image2_labeled_indx] == image2_prediction_rf_smo))
 
+cat('predictive accuracy on the labeled pixels of image 3: \n')
+print(mean(image3$label[image3_labeled_indx] == image3_prediction_rf_smo))
+
 ```
 
 examine feature importances
 ```{r}
 cat('feature importances by decrease in GINI coefficient: \n')
 print(sort(importance(rf_fit_smo) / sum(importance(rf_fit_orig)), decreasing = T))
+
+```
+
+```{r}
 
 ```
 
