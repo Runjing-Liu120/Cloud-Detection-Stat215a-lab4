@@ -7,3 +7,6 @@
 *.rdb
 *.rdx
 *.RData
+*.tex
+*.gz
+*.pdf
