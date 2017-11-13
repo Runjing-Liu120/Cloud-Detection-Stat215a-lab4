@@ -67,12 +67,6 @@ images %>%
 
 ```
 
-2. Explore the relationships between the radiances of different angles, both visually and quantitatively.
-
-Do you notice differences between the two classes (cloud, no cloud) based on the radiances? 
-
-Are there differences based on the features (CORR, NDAI, SD)?
-
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
 
@@ -159,7 +153,7 @@ ggplot(d, aes(x, y, color = value)) +
 ```
 
 
-Do you notice differences between the two classes (cloud, no cloud) based on the radiances? Are there
+Do you notice differences between the two classes (cloud, no cloud) based on the radiances?
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
 
@@ -171,7 +165,7 @@ p <- ggplot(d, aes(x = value, group = factor(label), fill = factor(label))) +
 p + facet_wrap(~ variable, ncol = 3, scales = "free") + blank_theme
 ```
 
-differences based on the features (CORR, NDAI, SD)?
+Are there differences based on the features (CORR, NDAI, SD)?
 
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
