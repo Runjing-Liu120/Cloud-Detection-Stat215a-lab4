@@ -21,5 +21,39 @@
 \maketitle
 
 \section{Introduction}
+\subsection{Source of data}
+- definitions/ data source
+- expert labels plot
+- models used to predict labels
+
+\subsection{EDA}
+- Differences between angle radiances
+- cloud/nocloud angles
+- cloud/nocloud 
+
+\section{Models}
+\subsection{Training and Testing}
+- CV, held out third image
+
+\subsection{LASSO}
+- introduce algorithm
+- specific parameters tuned
+\subsection{RF}
+
+\subsection{SVM}
+
+\section{Results}
+\subsection{Accuracy}
+\subsection{Features}
+- quantitative and visual justification
+
+\section{Discussion}
+- final model chosen: Show some diagnostic plots or information related to convergence or
+parameter estimation.
+For your best classification model(s), do you notice any patterns in the misclassification errors? Again,
+use quantitative and visual methods of analysis. Do you notice problems in particular regions, or in
+specific ranges of feature values?
+6. How well do you think your model will work on future data without expert labels?
+
 
 \end{document}
