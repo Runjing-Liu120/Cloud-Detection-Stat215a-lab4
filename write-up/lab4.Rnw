@@ -21,7 +21,6 @@
 \maketitle
 <<setup, echo = FALSE>>=
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-
 @
 
 
@@ -60,12 +59,11 @@ knitr::include_graphics('./panda.jpg')
 - cloud/nocloud 
 
 \section{Models}
-\subsection{Training and Testing (BL) }
-- CV, held out third image
+\subsection{Model selection and validation}
+To validate our results, we held out the third image until our models were set. Algorithms were trained on the first two images only. In particular, model selection was done using 2-fold cross validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The results (usually predictive accuracy) of these two folds are averaged, and we choose the optimal model parameter to maximize this averaged predictive accuracy. 
 
-\subsection{LASSO (BL)}
-- introduce algorithm
-- specific parameters tuned
+\subsection{Logistic regression and LASSO}
+
 
 \subsection{RF (YN) }
 
@@ -105,9 +103,10 @@ knitr::include_graphics('./panda.jpg')
 
 \begin{table}[h]
 \centering
-\begin{tabular}{llll}
-logistic & LASSO & RF & SVM \\
-100\% !! & 100\% !! & 100\% !! & 100\% !!
+\begin{tabular}{lllll}
+& logistic & LASSO & RF & SVM \\
+smoothed features & 100\% !! & 100\% !! & 100\% !! & 100\% !!\\
+original features & 99\% !! & 99\% !! & 99\% !! & 99\% !!
 \end{tabular}
 \caption{accuracy on test set}
 \end{table}
