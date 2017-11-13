@@ -37,13 +37,12 @@ source('../LASSO/lasso_lib.R')
 ```
 
 # Fit using random forest
-We fit a random forest to image 2 and 3, and examine the predictive accuracy on the third image. 
+We fit a random forest to image 1 and 2, and examine the predictive accuracy on the third image. 
 
 ```{r get_features, cache = TRUE}
 # get indices with labels
 image1_labeled_indx <- which(image1$label != 0)
 image2_labeled_indx <- which(image2$label != 0)
-
 
 feature_names <- colnames(image1)[3:dim(image1)[2]]
 

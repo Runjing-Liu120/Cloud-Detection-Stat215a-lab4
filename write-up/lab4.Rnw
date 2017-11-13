@@ -1,0 +1,25 @@
+\documentclass{article}
+
+\usepackage{geometry}
+\geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setlength{\parskip}{\smallskipamount}
+\setlength{\parindent}{0pt}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{algorithm,algorithmic}
+\usepackage{subcaption}
+\usepackage{color}
+\usepackage{hyperref}
+
+
+\begin{document}
+
+\title{Lab 4 - Cloud Detection}
+
+\maketitle
+
+\section{Introduction}
+
+\end{document}
