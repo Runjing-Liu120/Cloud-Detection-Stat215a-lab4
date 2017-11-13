@@ -21,26 +21,27 @@
 \maketitle
 
 \section{Introduction}
-\subsection{Source of data}
+\subsection{Source of data (RN)}
 - definitions/ data source
 - expert labels plot
 - models used to predict labels
 
-\subsection{EDA}
+\subsection{EDA (RN)}
 - Differences between angle radiances
 - cloud/nocloud angles
 - cloud/nocloud 
 
 \section{Models}
-\subsection{Training and Testing}
+\subsection{Training and Testing (BL) }
 - CV, held out third image
 
-\subsection{LASSO}
+\subsection{LASSO (BL)}
 - introduce algorithm
 - specific parameters tuned
-\subsection{RF}
 
-\subsection{SVM}
+\subsection{RF (YN) }
+
+\subsection{SVM (RN) }
 
 \section{Results}
 \subsection{Accuracy}
