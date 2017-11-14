@@ -60,7 +60,6 @@ knitr::include_graphics('./panda.jpg')
 - cloud/nocloud 
 
 \section{Models}
-\subsetion
 
 \subsection{Logistic regression and LASSO}
 
