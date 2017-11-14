@@ -1,0 +1,398 @@
+---
+title: "Exploring the lasso"
+author: "Bryan"
+date: "10/27/2107"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+```{r load_data, cache = TRUE, echo = FALSE}
+library(knitr)
+library(tidyverse)
+library(glmnet)
+# load data
+image1 <- read.table('../image_data/image1.txt', header = F)
+image2 <- read.table('../image_data/image2.txt', header = F)
+image3 <- read.table('../image_data/image3.txt', header = F)
+
+# add column labels
+collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+names(image1) <- collabs
+names(image2) <- collabs
+names(image3) <- collabs
+
+```
+
+```{r load_utils, cache = FALSE, echo = FALSE}
+source('./lasso_lib.R')
+source('./smoothing_fun.R')
+```
+
+# Fit using logistic regresssion with original 8 features (and pairwise interactions)
+```{r get_features, cache = TRUE}
+# get indices with labels
+image1_labeled_indx <- which(image1$label != 0)
+image2_labeled_indx <- which(image2$label != 0)
+image3_labeled_indx <- which(image3$label != 0)
+
+# get the original eight features
+image1_features <- image1[, -c(1,2,3)]
+image2_features <- image2[, -c(1,2,3)]
+image3_features <- image3[, -c(1,2,3)]
+
+image1_labels <- image1[, 3]
+image2_labels <- image2[, 3]
+image3_labels <- image3[, 3]
+
+# add second order interactions
+# image1_poly_features <- add_interaction_terms(image1[, -c(1,2,3)])
+# image2_poly_features <- add_interaction_terms(image2[, -c(1,2,3)])
+# image3_poly_features <- add_interaction_terms(image3[, -c(1,2,3)])
+
+training_features <- as.matrix(rbind(image1_features[image1_labeled_indx, ],
+                     image2_features[image2_labeled_indx, ]))
+training_labels <- c(image1_labels[image1_labeled_indx], 
+       image2_labels[image2_labeled_indx])
+
+training_labels[training_labels == -1] <- 0
+
+logist_fit <- glmnet(training_features, training_labels, family = 'binomial', 
+                     lambda = 0)
+```
+
+```{r plot_logistic_results, cache = TRUE}
+# get prediction probabilities
+image1_prediction_prob_logistic <- predict(logist_fit, 
+                              newx = as.matrix(image1_features),
+                              type = 'response')
+image2_prediction_prob_logistic <- predict(logist_fit, 
+                              newx = as.matrix(image2_features),
+                              type = 'response')
+image3_prediction_prob_logistic <- predict(logist_fit, 
+                              newx = as.matrix(image3_features),
+                              type = 'response')
+
+# round for plotting
+image1_prediction_logistic <- get_labels_from_prob(image1_prediction_prob_logistic, 
+                                                   thresh_lb = 0.5, 
+                                                   thresh_ub = 0.5) 
+image2_prediction_logistic <- get_labels_from_prob(image2_prediction_prob_logistic, 
+                                                   thresh_lb = 0.5, 
+                                                   thresh_ub = 0.5) 
+image3_prediction_logistic <- get_labels_from_prob(image3_prediction_prob_logistic,
+                                                   thresh_lb = 0.5, 
+                                                   thresh_ub = 0.5) 
+
+image1_orig <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image1_pred <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                color = factor(image1_prediction_logistic))) +  
+  scale_color_discrete(name = "Predicted label")
+
+image2_orig <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image2_pred <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                color = factor(image2_prediction_logistic))) +  
+  scale_color_discrete(name = "Predicted label")
+
+source('./multiplot.R')
+multiplot(image1_orig, image2_orig, 
+          image1_pred, image2_pred, cols=2)
+
+```
+
+Print coefficients: 
+```{r}
+print(logist_fit$beta)
+```
+examine accuracy: 
+```{r get_logistic_accuracy, cache = TRUE}
+cat('on the labeled pixels of image 1: \n')
+print(mean(image1$label[image1_labeled_indx] ==
+  image1_prediction_logistic[image1_labeled_indx]))
+
+cat('on the labeled pixels of image2: \n')
+print(mean(image2$label[image2_labeled_indx] ==
+  image2_prediction_logistic[image2_labeled_indx]))
+
+cat('on the labeled pixels of image3: \n')
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction_logistic[image3_labeled_indx]))
+```
+
+
+```{r logistic_smoothed}
+# add smoothed features
+image1_features_smo <- smooth_all_features(image1_features, 
+                                                     coord = image1[, 1:2])
+image2_features_smo <- smooth_all_features(image2_features, 
+                                                     coord = image2[, 1:2])
+image3_features_smo <- smooth_all_features(image3_features, 
+                                                     coord = image3[, 1:2])
+
+training_features_smo <- as.matrix(rbind(
+  image1_features_smo[image1_labeled_indx, ],
+  image2_features_smo[image2_labeled_indx, ]))
+
+training_labels <- c(image1_labels[image1_labeled_indx], 
+       image2_labels[image2_labeled_indx])
+
+training_labels[training_labels == -1] <- 0
+
+logist_fit_smo <- glmnet(training_features_smo, training_labels, family = 'binomial', 
+                     lambda = 0)
+
+```
+
+look at prediction results
+```{r}
+# get prediction probabilities
+image1_prediction_prob_logistic_smo <- predict(logist_fit_smo, 
+                              newx = as.matrix(image1_features_smo),
+                              type = 'response')
+image2_prediction_prob_logistic_smo <- predict(logist_fit_smo, 
+                              newx = as.matrix(image2_features_smo),
+                              type = 'response')
+image3_prediction_prob_logistic_smo <- predict(logist_fit_smo, 
+                              newx = as.matrix(image3_features_smo),
+                              type = 'response')
+
+# round for plotting
+image1_prediction_logistic_smo <-
+  get_labels_from_prob(image1_prediction_prob_logistic_smo, 
+                       thresh_lb = 0.5, 
+                        thresh_ub = 0.5) 
+image2_prediction_logistic_smo <-
+  get_labels_from_prob(image2_prediction_prob_logistic_smo,
+                       thresh_lb = 0.5, 
+                        thresh_ub = 0.5) 
+
+image3_prediction_logistic_smo <-
+  get_labels_from_prob(image3_prediction_prob_logistic_smo, 
+                       thresh_lb = 0.5, 
+                        thresh_ub = 0.5) 
+
+cat('on the labeled pixels of image 1: \n')
+print(mean(image1$label[image1_labeled_indx] ==
+  image1_prediction_logistic_smo[image1_labeled_indx]))
+
+cat('on the labeled pixels of image2: \n')
+print(mean(image2$label[image2_labeled_indx] ==
+  image2_prediction_logistic_smo[image2_labeled_indx]))
+
+cat('on the labeled pixels of image3: \n')
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction_logistic_smo[image3_labeled_indx]))
+
+```
+
+# Fit using LASSO 
+
+### examining the lasso path
+Here, we will explore cloud prediction using a lasso-logistic regression. First, we fit lasso using only the original 8 coefficients. Will we be able to recover the 3 engineered features? That is, will those 3 features (NDIR, CORR, SD) be found to be important? The lasso path is shown below: 
+```{r lasso_orig, cache = TRUE, echo = FALSE}
+
+# fit lasso and examine path
+fit <- glmnet(training_features, training_labels, family = "binomial")
+plot(fit, xvar = "lambda", label = TRUE)
+
+```
+
+### fitting the model
+Here, we use 2-fold cross-validation (the two folds corresponding to the two images) to find $\lambda$ That is, we fit logistic-lasso using the first image for a range of $\lambda$. We then get the prediction accuracy (by simple mis-classifcation error) on the second image. We then reverse the roles of the two images in this procedure. The preditive accuracies are averaged, and plotted below as a function of $\lambda$. We then use the optimal $\lambda$ to fit on the entire dataset. 
+
+Here, we fit using the orignal 8 as well as all pairwise interactions
+
+```{r lasso_orig_pred, cache = TRUE, echo = FALSE}
+fit_lasso <- get_fit_2fold_cv(as.matrix(image1_features[image1_labeled_indx, ]),
+                             image1$label[image1_labeled_indx],
+                             as.matrix(image2_features[image2_labeled_indx, ]), 
+                             image2$label[image2_labeled_indx])
+```
+
+```{r lasso_orig_plots1, cache = TRUE, echo = FALSE}
+ggplot() + geom_point(aes(x = fit_lasso$cv_results$lambda, 
+                          y = fit_lasso$cv_results$accuracy)) + 
+  ylab('classification accuracy') + xlab('lambda') +
+  geom_vline(xintercept=fit_lasso$cv_results$lambda_best)
+
+```
+
+At this value of lambda, we print the coefficients: 
+```{r, cahce = TRUE}
+cat('coefficients: \n')
+print(fit_lasso$fit$beta)
+```
+
+
+The result of this fit is shown below. Probabilities greater than 0.6 are labeled +1, probabilities less than 0.4 are labeled -1, and those in between are 0.  
+```{r plot_lasso_predictions, cache = TRUE}
+# get prediction probabilities
+image1_prediction_prob_lasso_orig <- predict(fit_lasso$fit, 
+                                             newx = as.matrix(image1_features),
+                                             s = fit_lasso$cv_results$lambda_best,
+                                             type = 'response')
+
+image2_prediction_prob_lasso_orig <- predict(fit_lasso$fit, 
+                                             newx = as.matrix(image2_features),
+                                             s = fit_lasso$cv_results$lambda_best,
+                                             type = 'response')
+
+image3_prediction_prob_lasso_orig <- predict(fit_lasso$fit, 
+                                             newx = as.matrix(image3_features),
+                                             s = fit_lasso$cv_results$lambda_best,
+                                             type = 'response')
+# round
+image1_prediction_lasso_orig <- get_labels_from_prob(image1_prediction_prob_lasso_orig)
+image2_prediction_lasso_orig <- get_labels_from_prob(image2_prediction_prob_lasso_orig)
+image3_prediction_lasso_orig <- get_labels_from_prob(image3_prediction_prob_lasso_orig)
+
+```
+
+The final accuracy of our predictions: 
+```{r get_lasso_accuracy, cache = TRUE}
+cat('on the labeled pixels of image 1: \n')
+print(mean(image1$label[image1_labeled_indx] ==
+  image1_prediction_lasso_orig[image1_labeled_indx]))
+
+cat('on the labeled pixels of image2: \n')
+print(mean(image2$label[image2_labeled_indx] ==
+  image2_prediction_lasso_orig[image2_labeled_indx]))
+
+cat('on the labeled pixels of image3: \n')
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction_lasso_orig[image3_labeled_indx]))
+
+```
+
+# Lets try to smooth the features
+We smooth the features using K-nearest-neighbors. We also add interaction terms. 
+```{r}
+source('./smoothing_fun.R')
+# smooth features
+image1_features_smoothed <- smooth_all_features(image1_features, 
+                                                     coord = image1[, 1:2])
+image2_features_smoothed <- smooth_all_features(image2_features, 
+                                                     coord = image2[, 1:2])
+image3_features_smoothed <- smooth_all_features(image3_features, 
+                                                     coord = image3[, 1:2])
+
+
+fit_lasso_smooth <- get_fit_2fold_cv(
+                            as.matrix(image1_features_smoothed[image1_labeled_indx, ]),
+                             image1_labels[image1_labeled_indx],
+                            as.matrix(image2_features_smoothed[image2_labeled_indx, ]), 
+                             image2_labels[image2_labeled_indx])
+
+ggplot() + geom_point(aes(x = fit_lasso_smooth$cv_results$lambda, 
+                          y = fit_lasso_smooth$cv_results$accuracy)) + 
+  ylab('classification accuracy') + xlab('lambda') +
+  geom_vline(xintercept=fit_lasso_smooth$cv_results$lambda_best)
+
+```
+The coefficients in this case ... 
+```{r, cahce = TRUE}
+cat('coefficients: \n')
+print(fit_lasso_smooth$fit$beta)
+```
+
+```{r plot_lasso_predictions, cache = TRUE}
+# get prediction probabilities
+image1_prediction_prob_lasso_smo <- predict(fit_lasso_smooth$fit, 
+                            newx = as.matrix(image1_features_smoothed), 
+                             s = fit_lasso_smooth$cv_results$lambda_best,
+                             type = 'response')
+
+image2_prediction_prob_lasso_smo <- predict(fit_lasso_smooth$fit, 
+                            newx = as.matrix(image2_features_smoothed), 
+                             s = fit_lasso_smooth$cv_results$lambda_best,
+                             type = 'response')
+
+image3_prediction_prob_lasso_smo <- predict(fit_lasso_smooth$fit, 
+                            newx = as.matrix(image3_features_smoothed), 
+                             s = fit_lasso_smooth$cv_results$lambda_best,
+                             type = 'response')
+
+# round for plotting
+image1_prediction_lasso_smo <- get_labels_from_prob(image1_prediction_prob_lasso_smo)
+image2_prediction_lasso_smo <- get_labels_from_prob(image2_prediction_prob_lasso_smo)
+image3_prediction_lasso_smo <- get_labels_from_prob(image3_prediction_prob_lasso_smo)
+
+image1_orig <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image1_pred <- 
+  ggplot(image1) + geom_point(aes(x = x, y = y, 
+                                color = factor(image1_prediction_lasso_smo))) +  
+  scale_color_discrete(name = "Predicted label")
+
+image2_orig <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                  color = factor(label))) +
+  scale_color_discrete(name = "Expert label")
+
+image2_pred <- 
+  ggplot(image2) + geom_point(aes(x = x, y = y, 
+                                color = factor(image2_prediction_lasso_smo))) +  
+  scale_color_discrete(name = "Predicted label")
+
+source('./multiplot.R')
+multiplot(image1_orig, image2_orig, 
+          image1_pred, image2_pred, cols=2)
+
+
+```
+
+The final accuracy of our predictions: 
+```{r get_lasso_accuracy, cache = TRUE}
+cat('on the labeled pixels of image 1: \n')
+print(mean(image1$label[image1_labeled_indx] ==
+  image1_prediction_lasso_smo[image1_labeled_indx]))
+
+cat('on the labeled pixels of image2: \n')
+print(mean(image2$label[image2_labeled_indx] ==
+  image2_prediction_lasso_smo[image2_labeled_indx]))
+
+
+cat('on the labeled pixels of image3: \n')
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction_lasso_smo[image3_labeled_indx]))
+
+# get indices with labels
+image3_labeled_indx <- which(image3$label != 0)
+
+# add second order interactions
+image3_poly_features <- add_interaction_terms(image3[, -c(1,2,3)])
+image3_poly_features_smoothed <- smooth_all_features(image3_poly_features, 
+                                                     coord = image3[, 1:2])
+image3_poly_features_smoothed <- as.matrix(image3_poly_features_smoothed)
+
+image3_labels <- image3[, 3]
+image3_prediction_prob_lasso_orig <- predict(fit_poly_smooth$fit, 
+                              newx =image3_poly_features_smoothed, 
+                             s = fit_poly_smooth$cv_results$lambda_best,
+                             type = 'response')
+
+image3_prediction_lasso_orig <-get_labels_from_prob(image3_prediction_prob_lasso_orig)
+
+print('test accuracy on held out third image: ')
+print(mean(image3$label[image3_labeled_indx] ==
+  image3_prediction_lasso_orig[image3_labeled_indx]))
+
+```
+

@@ -71,8 +71,7 @@ Hence, similar to how the engineered features NDAI, CORR, and SD in ({\color{red
 In our results, we will compare the predictive accuracy of algoirithms that only use the eight original features against those that use the eight original plus the smoothed features. 
 
 \subsection{Logistic regression and LASSO}
-As a first attempt to predict the expert labels, we fit a logistic regression using the eight features as well as all pairwise interactions. We also fit using all these ${8 \choose 2} + 8$ features, and then appending all their smoothed values. So in total we have $2\times ({8 \choose 2} + 8)$ features. 
-
+As a first attempt to predict the expert labels, we fit a logistic regression using the eight features, as well as the eight features plus their smoothed their smoothed values. 
 However, to guard against overfitting, we then fit a logistic regression to those features described above but with an $L1$ penalty. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. The regularization parameter was chosen using 2-fold cross-validation as described in section~\ref{cv}.
 
 \subsection{RF (YN) }
@@ -122,8 +121,8 @@ knitr::include_graphics('./panda.jpg')
 \centering
 \begin{tabular}{lllll}
 & logistic & LASSO & RF & SVM \\
-smoothed features & 100\% !! & 100\% !! & 100\% !! & 100\% !!\\
-original features & 99\% !! & 99\% !! & 99\% !! & 99\% !!
+smoothed features & 0.7258 & 0.7182 !! & 100\% !! & 100\% !!\\
+original features & 0.7271 & 0.7180 & 99\% !! & 99\% !!
 \end{tabular}
 \caption{accuracy on test set}
 \end{table}
