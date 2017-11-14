@@ -66,16 +66,20 @@ knitr::include_graphics('./panda.jpg')
 \subsection{Feature smoothing}
 In image data, neighboring pixels are generally not independent; in particular, there is reason to believe there to be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud, is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels. 
 
-Hence, similar to how the engineered features NDAI, CORR, and SD in ({\color{red} cite}) at a pixel takes information from its surrouding 8\times 8 grid of pixels, we also smooth the features. In addition to the original eight features, we add eight more feautres that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neightbors. 
+Hence, similar to how the engineered features NDAI, CORR, and SD in ({\color{red} cite}) at a pixel takes information from its surrouding $8\times 8$ grid of pixels, we also smooth the features. In addition to the original eight features, we add eight more feautres that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
+
+In our results, we will compare the predictive accuracy of algoirithms that only use the eight original features against those that use the eight original plus the smoothed features. 
 
 \subsection{Logistic regression and LASSO}
-As a first attempt to predict the expert labels, we fit a logistic regression on the original eight features as well as the  However, to guard 
+As a first attempt to predict the expert labels, we fit a logistic regression using the eight features as well as all pairwise interactions. We also fit using all these ${8 \choose 2} + 8$ features, and then appending all their smoothed values. So in total we have $2\times ({8 \choose 2} + 8)$ features. 
+
+However, to guard against overfitting, we then fit a logistic regression to those features described above but with an $L1$ penalty. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. The regularization parameter was chosen using 2-fold cross-validation as described in section~\ref{cv}.
 
 \subsection{RF (YN) }
 
 \subsection{SVM (RN) }
 
-\subsection{Model selection and validation}
+\subsection{Model selection and validation}\label{cv}
 To validate the performance of the algorithms above, we held out the third image as a test set, un-opened until our models were set. We measured the predictive accuracy only on the labels where the experts gave a definitive that a pixel was cloud or non-cloud. 
 
 Algorithms were trained on the first two images only. In particular, model selection was done using 2-fold cross-validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The results (usually predictive accuracy) of these two folds are averaged, and we choose the optimal model parameter to maximize this averaged predictive accuracy. 
