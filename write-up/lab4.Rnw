@@ -20,6 +20,7 @@
 
 \maketitle
 <<setup, echo = FALSE>>=
+# set defaults for future code chunks
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
                       dev='png', dpi = 300)
 @
@@ -61,15 +62,20 @@ knitr::include_graphics('./panda.jpg')
 
 \section{Models}
 
-\subsection{Logistic regression and LASSO}
+\subsection{Feature smoothing}
+In image data, neighboring pixels are generally not independent, and there is reason to believe there is some ``continuity" in the structure of an image. In light of this, we attempt to 
 
+\subsection{Logistic regression and LASSO}
+As a first attempt to predict the expert labels, we fit a logistic regression on the original eight features as well as the  However, to guard 
 
 \subsection{RF (YN) }
 
 \subsection{SVM (RN) }
 
 \subsection{Model selection and validation}
-To validate the performance of the algorithms above, we held out the third image as a test set, un-opened until our models were set. Algorithms were trained on the first two images only. In particular, model selection was done using 2-fold cross validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The results (usually predictive accuracy) of these two folds are averaged, and we choose the optimal model parameter to maximize this averaged predictive accuracy. 
+To validate the performance of the algorithms above, we held out the third image as a test set, un-opened until our models were set. We measured the predictive accuracy only on the labels where the experts gave a definitive that a pixel was cloud or non-cloud. 
+
+Algorithms were trained on the first two images only. In particular, model selection was done using 2-fold cross validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The results (usually predictive accuracy) of these two folds are averaged, and we choose the optimal model parameter to maximize this averaged predictive accuracy. 
 
 \section{Results}
 \subsection{Accuracy}
