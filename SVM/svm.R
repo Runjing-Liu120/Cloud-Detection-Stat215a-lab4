@@ -1,3 +1,6 @@
+#install.packages('dplyr')
+#install.packages('ggplot2')
+#install.packages('resape2')
 #install.packages('e1071')
 
 library(dplyr)
@@ -33,13 +36,13 @@ image3.prepped <- prep_image(image3)
 
 
 # Specifying the covariates (need to include label)
-col <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN', 'label')
+col <- c('NDAI','SD','AF', 'label')
 
-#s <- sample(115229, 5000)
+s <- sample(115229, 1000)
 
 # Specifying train vs test set
-image_train <- image1.prepped[,col]
-image_test <- image2.prepped[,col]
+image_train <- image2.prepped[s,col]
+image_test <- image1.prepped[,col]
 
 
 # Running the svm
@@ -50,20 +53,29 @@ svm.model <- svm(label~.,
               scale = FALSE
               )
 
+svm.model
 
-print(svm.model)
-#plot(svm.model, image_train[,col]) #can only plot with two covariates
-
-
-# Tuning to figure out optimal cost
-tuned <- tune(svm, label~., 
-              data = image_train, 
-              kernel = 'polynomial',
-              ranges = list(cost = c(0.001, 0.01, .1, 10, 100)))
 
 # Predicting on test set
 svm.predict <- predict(svm.model, image_test[,col], type = "class")
 
 # Results of prediction
-table(svm.predict, image_test[,9])
-mean(svm.predict == image_test[,9])
+table(svm.predict, image_test[,4])
+mean(svm.predict == image_test[,4])
+
+
+# Tuning model
+tuned <- tune(svm, label~., 
+              data = image_train, 
+              kernel = 'polynomial',
+              ranges = list(cost = c(0.001, 0.01, .1, 10, 100)))
+tuned
+
+svm.model.tuned <- tuned$best.model
+
+# Predicting on test set with tuned model
+svm.predict <- predict(svm.model.tuned, image_test[,col], type = "class")
+
+# Results of prediction with tuned model
+table(svm.predict, image_test[,4])
+mean(svm.predict == image_test[,4])
