@@ -35,6 +35,7 @@ library(knitr)
 
 source('./R/data_processing_utils.R')
 source('./R/lasso_utils.R')
+source('./R/rf.R')
 
 @
 
@@ -105,10 +106,11 @@ The regularization parameter was chosen using 2-fold cross-validation: we fit on
 
 We chose to do 2-fold cross-validation since in image data, each pixel is likely not independent. A given pixel is likely to be similar to its neighbors; for example, from figure~\ref{fig:expert_labels} a cloud pixel is usually surrounded by by other cloudy pixels, and an ice pixel is usually surrounded by other ice pixels. Hence, if we randomly split an image into K-folds, these folds are not independent, and our accuracy measurement will be over-optimstic. Our choice to do 2-fold cross-validation rests on the assumption that while individual pixels are not independent, we assume that the two images are independent. We hope that this independence will give more realistic accuracy measurements. 
 
-\subsection{RF (YN) }
+\subsection{RF (YN) }\label{rf_descr}
+We also trained several Random Forest models as classifiers to predict the image labels, using the original eight features and optionally the smoothed features. The number of decision trees in each model is chosen to be 500. We make the trees to return probabilities of the predicted labels instead of binary responses, and then apply thresholding (as we did in logisitic regression) to get the predicted labels.
 
 \subsubsection*{Model selection and validation}
-describe how CV was done (if at all), and what were your test and training sets. 
+The model was first trained on image 1, and then the model was tested on image2 and image 3. The 2-fold cross validation was performed in that we also trained the model on image 3, and tested on image 1 and image 2. We use Random Forest as an out-of-the-box algorithm so there are no parameters to be tuned.
 
 \subsection{SVM (RN) }
 \subsubsection*{Model selection and validation}
@@ -159,6 +161,14 @@ Unlike in the normal logistic regression, we here must do cross-validation to ch
 The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred$accuracy} when using the original features, and \Sexpr{image3_lasso_smo_pred$accuracy} when using the smoothed features. Like in the logistic regression, smoothing the features did not appear to make a big difference here. 
 
 \subsubsection*{Random Forest}
+
+<<rf, cache = TRUE, results = 'hide'>>=
+rf_fit_orig <- get_rf_fit(image1, smooth_features = FALSE)
+rf_fit_orig_smo <- get_rf_fit(image1, smooth_features = TRUE)
+
+image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3)
+image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3)
+@
 predictive accuracy on second image vs. third image. 
 predictive accuracy on smoothed vs. non-smoothed features. 
 
