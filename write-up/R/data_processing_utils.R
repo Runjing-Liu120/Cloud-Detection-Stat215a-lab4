@@ -29,17 +29,19 @@ smooth_all_features <- function(X, coord, k = 64){
 
 
 load_image <- function(filename = 'image1.txt', path = 'image_data/'){
-    # Loads image, adds column names, and makes labels into factors
-    # prep for plotting
+  # Loads image, adds column names, and makes labels into factors
+  # prep for plotting
     
-    collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+  collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+  
+  # Reading-in image, setting column names
+  image <- read.table(paste0(path, filename), header = F)
+  names(image) <- collabs
+  
+  # Making labels factors
+  image$label <- as.factor(image$label)
     
-    # Reading-in image, setting column names
-    image <- read.table(paste0(path, filename), header = F)
-    names(image) <- collabs
-    
-    # Making labels factors
-    image$label <- as.factor(image$label)
+  return(image)
 
 }
 
