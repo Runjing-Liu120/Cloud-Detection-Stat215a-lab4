@@ -27,19 +27,32 @@ smooth_all_features <- function(X, coord, k = 64){
   return(features)
 }
 
+
+load_image <- function(filename = 'image1.txt', path = 'image_data/'){
+    # Loads image, adds column names, and makes labels into factors
+    # prep for plotting
+    
+    collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
+    
+    # Reading-in image, setting column names
+    image <- read.table(paste0(path, filename), header = F)
+    names(image) <- collabs
+    
+    # Making labels factors
+    image$label <- as.factor(image$label)
+
+}
+
 prep_image <- function(filename = 'image1.txt', path = 'image_data/'){
-  #This function takes in the image file name and path and 
-  #returns a dataframe including the original columns with 
-  #additional columns representing each feature smoothed. It also
-  #preps the dataframe for the models by making the labels into factors
-  #and getting rid of the observations with labeled "0".
+  # This function takes in the image file name and path and
+  # returns a dataframe including the original columns with
+  # additional columns representing each feature smoothed. It also
+  # preps the dataframe for the models by making the labels into factors
+  # and getting rid of the observations with labeled "0".
   
-  collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
-  
-  # Reading-in image, setting column names
-  image <- read.table(paste0(path, filename), header = F)
-  names(image) <- collabs
-  
+  # Reading-in image, setting column names, converting labels to factors
+  image <- load_image(filename, path)
+
   # Adding columns of smoothed features
   image.features <- image[, -c(1,2,3)]
   image.labels <- image[, 3]
@@ -47,8 +60,7 @@ prep_image <- function(filename = 'image1.txt', path = 'image_data/'){
                                      coord = image[, 1:2])
   image <- cbind(image[1:3], scale(image.added))
   
-  # Getting rid of zero labels and making them factors
-  image$label <- as.factor(image$label)
+  # Getting rid of zero labels
   image <- image %>%
     filter(label != 0)
   
