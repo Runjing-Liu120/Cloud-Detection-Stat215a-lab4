@@ -26,16 +26,17 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
 @
 
 
-<<libraries>>=
+<<libraries, cache = FALSE>>=
 library(tidyverse)
 library(glmnet)
+library(knitr)
 
 source('./R/data_processing_utils.R')
 source('./R/lasso_utils.R')
 
 @
 
-<<load_data>>=
+<<load_data, cache = TRUE>>=
 # first two columns are coordinates
 # third columns are labels
 # next eight are original features
@@ -75,6 +76,7 @@ knitr::include_graphics('./panda.jpg')
 \label{fig:expert_labels}
 \end{figure}
 
+
 \subsection{EDA (RN)}
 - Differences between angle radiances
 - cloud/nocloud angles
@@ -82,41 +84,61 @@ knitr::include_graphics('./panda.jpg')
 
 \section{Models}
 
-\subsection{Feature smoothing}
+\subsection{Feature smoothing}\label{feature_selection}
 In image data, neighboring pixels are generally not independent; in particular, there is reason to believe there to be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud, is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels. 
 
 Hence, similar to how the engineered features NDAI, CORR, and SD in ({\color{red} cite}) at a pixel takes information from its surrouding $8\times 8$ grid of pixels, we also smooth the features. In addition to the original eight features, we add eight more feautres that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
 
 In our results, we will compare the predictive accuracy of algoirithms that only use the eight original features against those that use the smoothed features. 
 
-\subsection{Logistic regression and LASSO}
+\subsection{Logistic regression and LASSO}\label{lasso_descr}
 As a first attempt to predict the expert labels, we fit a logistic regression using the eight features, as well as the eight features plus their smoothed their smoothed values. 
 However, to guard against overfitting, we then fit a logistic regression to those features described above but with an $L1$ penalty. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
 
-\subsubsection{Model selection and validation}
+\subsubsection*{Model selection and validation}
 The regularization parameter was chosen using 2-fold cross-validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The predictive accuracy of these two folds are averaged, and we choose the optimal regularization parameter to maximize this averaged predictive accuracy. 
 
 We chose to do 2-fold cross-validation since in image data, each pixel is likely not independent. A given pixel is likely to be similar to its neighbors; for example, from figure~\ref{fig:expert_labels} a cloud pixel is usually surrounded by by other cloudy pixels, and an ice pixel is usually surrounded by other ice pixels. Hence, if we randomly split an image into K-folds, these folds are not independent, and our accuracy measurement will be over-optimstic. Our choice to do 2-fold cross-validation rests on the assumption that while individual pixels are not independent, we assume that the two images are independent. We hope that this independence will give more realistic accuracy measurements. 
 
 \subsection{RF (YN) }
 
-\subsubsection{Model selection and validation}
+\subsubsection*{Model selection and validation}
 describe how CV was done (if at all), and what were your test and training sets. 
 
 \subsection{SVM (RN) }
-\subsubsection{Model selection and validation}
+\subsubsection*{Model selection and validation}
 describe how CV was done (if at all), and what were your test and training sets. 
 
 
 
 \section{Results}
-\subsection{Feature selection}
-lasso coefficients selected ...
-random forest feature importance ...
 
 \subsection{Predictive accuracy}
+{\color{red} 
 predictive accuracy on second image vs. thrid image. 
-predictive accuracy on smoothed vs. non-smoothed features. 
+
+predictive accuracy on smoothed vs. non-smoothed features. }
+
+\subsubsection*{Logistic regression and LASSO}
+
+<<logistic_reg, cache = TRUE>>=
+# fit logistic regression to first image
+logistic_fit <- get_logistic_fit(image1, smooth_features = FALSE)
+logistic_fit_smo <- get_logistic_fit(image1, smooth_features = TRUE)
+
+# predict on second image
+image2_pred <- get_logistic_prediction(logistic_fit, image2)
+image2_pred_smo <- get_logistic_prediction(logistic_fit_smo, image2)
+
+# predict on third image
+image3_pred <- get_logistic_prediction(logistic_fit, image3)
+image3_pred_smo <- get_logistic_prediction(logistic_fit_smo, image3)
+@
+
+As a baseline, we use a simple logistic regression on the original eight features to predict the expert labels. We fit the model to the first image, and examine predictive accuracy on the second and third images. With the original features, the predictive accuracy on the second image is \Sexpr{image2_pred$accuracy}, while the predictive accuracy on the third image is \Sexpr{image3_pred$accuracy}. 
+
+We also fit a logistic regression on the smoothed features as described in section~\ref{smoothed_features}. Again fitting to image1, the predictive accuracies on images 2 and 3 are \Sexpr{image2_pred_smo$accuracy} and \Sexpr{image3_pred_smo$accuracy}, respectively. Therefore, it appears that smoothing the features did not have a significant effect when doing logistic regression.  
+
 
 \begin{figure}[h]
 \centering
@@ -157,8 +179,12 @@ original features & 0.7271 & 0.7180 & 99\% !! & 99\% !!
 \caption{accuracy on test set}
 \end{table}
 
-\subsection{Features}
-- quantitative and visual justification
+\subsection{Feature selection}
+Doing LASSO we found blah blah features to be important. 
+
+Doing RF we found blah blah features to be important. 
+
+Hence SVM only used these blah blah features. 
 
 \section{Discussion}
 - final model chosen: Show some diagnostic plots or information related to convergence or
