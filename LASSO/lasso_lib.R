@@ -1,6 +1,6 @@
-get_fit_2fold_cv <- function(image1_features, image1_labels, 
+get_lasso_fit_2fold_cv <- function(image1_features, image1_labels, 
                          image2_features, image2_labels, 
-                         thresh = c(0.4, 0.6)){
+                         thresh = c(0.5, 0.5)){
   # return lasso model with lambda chosen by 2-fold CV
   # where the two folds are the two images
   # thresh are the probabilties below/above which we label 1 or -1
