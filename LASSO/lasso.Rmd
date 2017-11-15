@@ -50,6 +50,8 @@ image3_labels <- image3[, 3]
 
 X <- rbind(image1_features[image1_labeled_indx, ],
                      image2_features[image2_labeled_indx, ])
+
+X <- scale(X)
 y <- c(image1_labels[image1_labeled_indx], 
        image2_labels[image2_labeled_indx])
 y[y == -1] <- 0
@@ -130,6 +132,7 @@ Here, we will explore cloud prediction using a lasso-logistic regression. First,
 # fit lasso and examine path
 X <- as.matrix(rbind(image1_features[image1_labeled_indx, ],
                      image2_features[image2_labeled_indx, ]))
+X <- scale(X)
 y <- c(image1_labels[image1_labeled_indx], 
        image2_labels[image2_labeled_indx])
 
@@ -142,10 +145,11 @@ As expected, feature 1, an engineered feature called NDIR becomes nonzero first.
 ### fitting the model
 Here, we use 2-fold cross-validation (the two folds corresponding to the two images) to find $\lambda$ That is, we fit logistic-lasso using the first image for a range of $\lambda$. We then get the prediction accuracy (by simple mis-classifcation error) on the second image. We then reverse the roles of the two images in this procedure. The preditive accuracies are averaged, and plotted below as a function of $\lambda$. We then use the optimal $\lambda$ to fit on the entire dataset. 
 
+
 ```{r lasso_orig_pred, cache = TRUE, echo = FALSE}
-fit_orig <- get_fit_2fold_cv(image1_features[image1_labeled_indx, ],
+fit_orig <- get_fit_2fold_cv(scale(image1_features[image1_labeled_indx, ]),
                              image1_labels[image1_labeled_indx],
-                             image2_features[image2_labeled_indx, ], 
+                             scale(image2_features[image2_labeled_indx, ]), 
                              image2_labels[image2_labeled_indx])
 ```
 ```{r lasso_orig_plots1, cache = TRUE, echo = FALSE}

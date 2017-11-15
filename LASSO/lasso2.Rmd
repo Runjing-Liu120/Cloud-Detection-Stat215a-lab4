@@ -137,11 +137,11 @@ print(mean(image3$label[image3_labeled_indx] ==
 ```{r logistic_smoothed}
 # add smoothed features
 image1_features_smo <- smooth_all_features(image1_features, 
-                                                     coord = image1[, 1:2])
+                                                     coord = image1[, 1:2])[9:16]
 image2_features_smo <- smooth_all_features(image2_features, 
-                                                     coord = image2[, 1:2])
+                                                     coord = image2[, 1:2])[9:16]
 image3_features_smo <- smooth_all_features(image3_features, 
-                                                     coord = image3[, 1:2])
+                                                     coord = image3[, 1:2])[9:16]
 
 training_features_smo <- as.matrix(rbind(
   image1_features_smo[image1_labeled_indx, ],
@@ -284,11 +284,11 @@ We smooth the features using K-nearest-neighbors. We also add interaction terms.
 source('./smoothing_fun.R')
 # smooth features
 image1_features_smoothed <- smooth_all_features(image1_features, 
-                                                     coord = image1[, 1:2])
+                                                     coord = image1[, 1:2])[9:16]
 image2_features_smoothed <- smooth_all_features(image2_features, 
-                                                     coord = image2[, 1:2])
+                                                     coord = image2[, 1:2])[9:16]
 image3_features_smoothed <- smooth_all_features(image3_features, 
-                                                     coord = image3[, 1:2])
+                                                     coord = image3[, 1:2])[9:16]
 
 
 fit_lasso_smooth <- get_fit_2fold_cv(
@@ -373,26 +373,6 @@ cat('on the labeled pixels of image3: \n')
 print(mean(image3$label[image3_labeled_indx] ==
   image3_prediction_lasso_smo[image3_labeled_indx]))
 
-# get indices with labels
-image3_labeled_indx <- which(image3$label != 0)
-
-# add second order interactions
-image3_poly_features <- add_interaction_terms(image3[, -c(1,2,3)])
-image3_poly_features_smoothed <- smooth_all_features(image3_poly_features, 
-                                                     coord = image3[, 1:2])
-image3_poly_features_smoothed <- as.matrix(image3_poly_features_smoothed)
-
-image3_labels <- image3[, 3]
-image3_prediction_prob_lasso_orig <- predict(fit_poly_smooth$fit, 
-                              newx =image3_poly_features_smoothed, 
-                             s = fit_poly_smooth$cv_results$lambda_best,
-                             type = 'response')
-
-image3_prediction_lasso_orig <-get_labels_from_prob(image3_prediction_prob_lasso_orig)
-
-print('test accuracy on held out third image: ')
-print(mean(image3$label[image3_labeled_indx] ==
-  image3_prediction_lasso_orig[image3_labeled_indx]))
 
 ```
 

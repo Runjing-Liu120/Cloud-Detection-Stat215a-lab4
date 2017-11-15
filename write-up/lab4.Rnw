@@ -68,25 +68,36 @@ In image data, neighboring pixels are generally not independent; in particular, 
 
 Hence, similar to how the engineered features NDAI, CORR, and SD in ({\color{red} cite}) at a pixel takes information from its surrouding $8\times 8$ grid of pixels, we also smooth the features. In addition to the original eight features, we add eight more feautres that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
 
-In our results, we will compare the predictive accuracy of algoirithms that only use the eight original features against those that use the eight original plus the smoothed features. 
+In our results, we will compare the predictive accuracy of algoirithms that only use the eight original features against those that use the smoothed features. 
 
 \subsection{Logistic regression and LASSO}
 As a first attempt to predict the expert labels, we fit a logistic regression using the eight features, as well as the eight features plus their smoothed their smoothed values. 
-However, to guard against overfitting, we then fit a logistic regression to those features described above but with an $L1$ penalty. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. The regularization parameter was chosen using 2-fold cross-validation as described in section~\ref{cv}.
+However, to guard against overfitting, we then fit a logistic regression to those features described above but with an $L1$ penalty. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
 
-\subsection{RF (YN) }
-
-\subsection{SVM (RN) }
-
-\subsection{Model selection and validation}\label{cv}
-To validate the performance of the algorithms above, we held out the third image as a test set, un-opened until our models were set. We measured the predictive accuracy only on the labels where the experts gave a definitive that a pixel was cloud or non-cloud. 
-
-Algorithms were trained on the first two images only. In particular, model selection was done using 2-fold cross-validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The results (usually predictive accuracy) of these two folds are averaged, and we choose the optimal model parameter to maximize this averaged predictive accuracy. 
+\subsubsection{Model selection and validation}
+The regularization parameter was chosen using 2-fold cross-validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The predictive accuracy of these two folds are averaged, and we choose the optimal regularization parameter to maximize this averaged predictive accuracy. 
 
 We chose to do 2-fold cross-validation since in image data, each pixel is likely not independent. A given pixel is likely to be similar to its neighbors; for example, from figure~\ref{fig:expert_labels} a cloud pixel is usually surrounded by by other cloudy pixels, and an ice pixel is usually surrounded by other ice pixels. Hence, if we randomly split an image into K-folds, these folds are not independent, and our accuracy measurement will be over-optimstic. Our choice to do 2-fold cross-validation rests on the assumption that while individual pixels are not independent, we assume that the two images are independent. We hope that this independence will give more realistic accuracy measurements. 
 
+\subsection{RF (YN) }
+
+\subsubsection{Model selection and validation}
+describe how CV was done (if at all), and what were your test and training sets. 
+
+\subsection{SVM (RN) }
+\subsubsection{Model selection and validation}
+describe how CV was done (if at all), and what were your test and training sets. 
+
+
+
 \section{Results}
-\subsection{Accuracy}
+\subsection{Feature selection}
+lasso coefficients selected ...
+random forest feature importance ...
+
+\subsection{Predictive accuracy}
+predictive accuracy on second image vs. thrid image. 
+predictive accuracy on smoothed vs. non-smoothed features. 
 
 \begin{figure}[h]
 \centering
