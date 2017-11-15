@@ -40,6 +40,15 @@ source('./R/data_processing_utils.R')
 source('./R/lasso_utils.R')
 source('./R/rf.R')
 
+blank_theme <- theme_minimal(base_size = 30) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank())
+remove_y <-   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
 @
 
 <<load_data, cache = TRUE>>=
