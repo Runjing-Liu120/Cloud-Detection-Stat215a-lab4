@@ -96,8 +96,9 @@ We also hope that this smoothing may give better test accuracy by ameliorating t
 In our results, we will compare the predictive accuracy of algoirithms that use the eight original features against those that use the smoothed features. 
 
 \subsection{Logistic regression and LASSO}\label{lasso_descr}
-As a first attempt to predict the expert labels, we fit a logistic regression using the eight features, as well as the eight features plus their smoothed their smoothed values. 
-However, to guard against overfitting, we then fit a logistic regression to those features described above but with an $L1$ penalty. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
+As a first attempt to predict the expert labels, we fit a logistic regression using the original eight features, as well the smoothed features. 
+
+However, to guard against overfitting, we then fit a logistic regression but with an $L1$ penalty. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
 
 \subsubsection*{Model selection and validation}
 The regularization parameter was chosen using 2-fold cross-validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The predictive accuracy of these two folds are averaged, and we choose the optimal regularization parameter to maximize this averaged predictive accuracy. 
@@ -218,7 +219,7 @@ knitr::include_graphics('./panda.jpg')
 \end{table}
 
 \subsection{Feature selection}
-<<lasso_feat_selection, cache = TRUE>>=
+<<lasso_feat_selection, cache = TRUE, results = 'hide'>>=
 image12 <- rbind(image1, image2)
 
 labeled_indx <- which(image12$label != 0)
