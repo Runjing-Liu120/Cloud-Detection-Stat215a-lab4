@@ -4,12 +4,36 @@ library(glmnet)
 library(ranger)
 library(dplyr)
 
-source('../LASSO/smoothing_fun.R')
-source('../LASSO/lasso_lib.R')
+get_labels_from_prob <- function(probabilities, thresh_lb = 0.4, thresh_ub = 0.6){
+  # get +1/-1/0 labels from a vector of probabilities
+  # probabilities above thresh_ub are labeled +1
+  # probabilities above thresh_lb are labeled -1
+  # in between are 0
+  
+  labels <- 1.0 * (probabilities > thresh_ub) + 
+    -1.0 * (probabilities < thresh_lb) 
+  
+  return(labels)
+  
+}
 
 get_rf_prediction <- function(model, image){
+  smooth_features <- 'NDAI_smoothed' %in% names(model$variable.importance)
+  labeled_indx <- which(image$label != 0)
+  labeled_image <- image[labeled_indx, ]
+  
+  y <- droplevels(labeled_image$label)
+  
+  if(smooth_features){
+    X <- image[, grep("_smoothed", colnames(image))] # get smoothed features
+  } else{
+    feature_names <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN')
+    X <- image[, feature_names]
+  }
+  
+  data <- cbind(y, X)
   image_prediction_prob_rf <- predict(model, 
-                                      dat = image, 
+                                      dat = X, 
                                       type = 'response')
   
   image_prediction_rf <- get_labels_from_prob(image_prediction_prob_rf$predictions[, 2])

@@ -349,4 +349,3 @@ examine feature importances
 cat('feature importances by decrease in GINI coefficient: \n')
 print(sort(importance(rf_fit_smo) / sum(importance(rf_fit_orig)), decreasing = T))
 ```
-
