@@ -1,4 +1,5 @@
 library(FNN)
+library(dplyr)
 
 smooth_features <- function(coord, feature_vec, k = 64){
   # coord: the location of the pixels n x 2 matrix of coordinates
