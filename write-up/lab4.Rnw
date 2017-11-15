@@ -163,9 +163,15 @@ The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred
 \subsubsection*{Random Forest}
 
 <<rf, cache = TRUE, results = 'hide'>>=
+image1_neighbor <- add_neighbor_info(image1)
+image2_neighbor <- add_neighbor_info(image2)
+image3_neighbor <- add_neighbor_info(image3)
+
 rf_fit_orig <- get_rf_fit(image1, smooth_features = FALSE)
 rf_fit_orig_smo <- get_rf_fit(image1, smooth_features = TRUE)
 
+image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2)
+image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2)
 image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3)
 image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3)
 @
