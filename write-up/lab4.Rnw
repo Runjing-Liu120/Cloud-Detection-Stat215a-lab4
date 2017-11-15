@@ -66,6 +66,7 @@ image3.plots <- load_image(filename = 'image3.txt', path)
 image1 <- prep_image(image1.plots)
 image2 <- prep_image(image2.plots)
 image3 <- prep_image(image3.plots)
+
 @
 
 \section{Introduction}
@@ -77,20 +78,20 @@ image3 <- prep_image(image3.plots)
 \begin{figure}[h]
 \centering
 \begin{subfigure}[t]{0.3\textwidth}
-<<>>=
+<<image_plot1, cache = TRUE>>=
 plotr(image1.plots, image1.plots$label, "none")
 @
 \subcaption{expert labeled image1}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
-<<>>=
+<<image_plot2, cache = TRUE>>=
 plotr(image2.plots, image2.plots$label, "none") +
   remove_y
 @
 \subcaption{expert labeled image2}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
-<<>>=
+<<image_plot3, cache = TRUE>>=
 plotr(image3.plots, image3.plots$label, "right") +
   remove_y
 @
@@ -195,11 +196,14 @@ image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2.plots)
 image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2.plots)
 image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3.plots)
 image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3.plots)
-plotr(image2.plots, fill = image2.plots$label)
-plotr(image2.plots, fill = image2_rf_pred$pred_class)
 @
 
-Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_smo_pred$accuracy}.
+<<rf_plot>>=
+#plotr(image2.plots, fill = image2.plots$label)
+#plotr(image2.plots, fill = image2_rf_pred$pred_class)
+@
+
+%Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_smo_pred$accuracy}.
 
 Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \texttt{AF\_smoothed} and \texttt{SD\_smoothed}.
 
