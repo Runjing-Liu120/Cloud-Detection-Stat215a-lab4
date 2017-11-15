@@ -41,19 +41,19 @@ load_image <- function(filename = 'image1.txt', path = 'image_data/'){
   # Making labels factors
   image$label <- as.factor(image$label)
     
-  return(image)
+return(image)
 
 }
 
-prep_image <- function(filename = 'image1.txt', path = 'image_data/'){
-  # This function takes in the image file name and path and
+prep_image <- function(image = image1.plots){
+  # This function takes in an image dataframe and
   # returns a dataframe including the original columns with
   # additional columns representing each feature smoothed. It also
   # preps the dataframe for the models by making the labels into factors
   # and getting rid of the observations with labeled "0".
   
   # Reading-in image, setting column names, converting labels to factors
-  image <- load_image(filename, path)
+  #image <- load_image(filename, path)
 
   # Adding columns of smoothed features
   image.features <- image[, -c(1,2,3)]

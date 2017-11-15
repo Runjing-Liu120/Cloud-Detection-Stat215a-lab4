@@ -44,9 +44,16 @@ source('./R/rf.R')
 # third columns are labels
 # next eight are original features
 # last eight are smoothed features 
-image1 <- prep_image(filename = 'image1.txt', path = '../image_data/')
-image2 <- prep_image(filename = 'image2.txt', path = '../image_data/')
-image3 <- prep_image(filename = 'image3.txt', path = '../image_data/')
+
+path = '../image_data/'
+
+image1.plots <- load_image(filename = 'image1.txt', path)
+image2.plots <- load_image(filename = 'image2.txt', path)
+image3.plots <- load_image(filename = 'image3.txt', path)
+
+image1 <- prep_image(image1.plots)
+image2 <- prep_image(image2.plots)
+image3 <- prep_image(image3.plots)
 @
 
 \section{Introduction}
