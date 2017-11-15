@@ -50,7 +50,7 @@ get_rf_fit <- function(image, smooth_features = FALSE){
 get_rf_prediction <- function(model, image){
   smooth_features <- 'NDAI_smoothed' %in% names(model$variable.importance)
   labeled_indx <- which(image$label != 0)
-  image <- image[labeled_indx, ]
+  # image <- image[labeled_indx, ]
   
   y <- droplevels(image$label)
   
@@ -67,7 +67,7 @@ get_rf_prediction <- function(model, image){
                                       type = 'response')
   
   image_prediction_rf <- get_labels_from_prob(image_prediction_prob_rf$predictions[, 2])
-  accuracy <- mean(y == image_prediction_rf)
+  accuracy <- mean(y[labeled_indx] == image_prediction_rf[labeled_indx])
   return(list(accuracy = accuracy,
               pred_class = image_prediction_rf))
 }
