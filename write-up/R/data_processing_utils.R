@@ -40,6 +40,13 @@ load_image <- function(filename = 'image1.txt', path = 'image_data/'){
   
   # Making labels factors
   image$label <- as.factor(image$label)
+  
+  # Adding columns of smoothed features
+  image.features <- image[, -c(1,2,3)]
+  image.labels <- image[, 3]
+  image.added <- smooth_all_features(image.features,
+                                     coord = image[, 1:2])
+  image <- cbind(image[1:3], scale(image.added))
     
 return(image)
 
@@ -54,13 +61,6 @@ prep_image <- function(image = image1.plots){
   
   # Reading-in image, setting column names, converting labels to factors
   #image <- load_image(filename, path)
-
-  # Adding columns of smoothed features
-  image.features <- image[, -c(1,2,3)]
-  image.labels <- image[, 3]
-  image.added <- smooth_all_features(image.features,
-                                     coord = image[, 1:2])
-  image <- cbind(image[1:3], scale(image.added))
   
   # Getting rid of zero labels
   image <- image %>%
