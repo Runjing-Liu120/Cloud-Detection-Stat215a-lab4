@@ -68,3 +68,31 @@ prep_image <- function(image = image1.plots){
   
   return(image)
 }
+
+
+
+plotr <- function(image = image1,
+                  fill = image1$label,
+                  legend.place = "bottom",
+                  legend.title = "label"){
+  # This function plots an image with a specified fill
+
+  plot <- image %>%
+    ggplot() +
+    geom_point(aes(x = x, y = y, color = factor(fill))) +
+    blank_theme +
+    guides(color=guide_legend(legend.title,
+    override.aes = list(size=10))) +
+    theme(legend.position=legend.place)+
+    coord_fixed(ratio = 1.11)
+    
+  return(plot)
+}
+
+
+
+
+
+
+
+
