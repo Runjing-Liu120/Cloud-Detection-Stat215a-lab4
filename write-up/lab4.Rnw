@@ -33,6 +33,8 @@ library(tidyverse)
 library(glmnet)
 library(knitr)
 library(ggplot2)
+library(dplyr)
+library(reshape2)
 
 source('./R/data_processing_utils.R')
 source('./R/lasso_utils.R')
@@ -67,19 +69,21 @@ image3 <- prep_image(image3.plots)
 \centering
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image1.plots, image1.plots$label, "none")
 @
 \subcaption{expert labeled image1}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image2.plots, image2.plots$label, "none") +
+  remove_y
 @
 \subcaption{expert labeled image2}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image3.plots, image3.plots$label, "right") +
+  remove_y
 @
 \subcaption{expert labeled image1}
 \end{subfigure}
