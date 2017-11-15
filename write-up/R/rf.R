@@ -70,9 +70,7 @@ add_neighbor_info <- function(image){
 
 
 # neighboring model: Try to add neighboring information and run random forest again
-image1_neighbor <- add_neighbor_info(image1)
-image2_neighbor <- add_neighbor_info(image2)
-image3_neighbor <- add_neighbor_info(image3)
+
 
 # feature importancesby decrease in GINI coefficient:
-sort(importance(rf_fit_orig) / sum(importance(rf_fit_orig)), decreasing = T)
+# sort(importance(rf_fit_orig) / sum(importance(rf_fit_orig)), decreasing = T)
