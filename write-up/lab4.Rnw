@@ -32,6 +32,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
 library(tidyverse)
 library(glmnet)
 library(knitr)
+library(ggplot2)
 
 source('./R/data_processing_utils.R')
 source('./R/lasso_utils.R')
@@ -181,9 +182,10 @@ image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2)
 image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2)
 image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3)
 image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3)
+plotr(image1.plots, fill = image1.plots$label)
 @
 
-Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred}, while on image 3 it was \Sexpr{image3_rf_pred}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred}, while on image 3 it was \Sexpr{image3_rf_smo_pred}.
+Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_smo_pred$accuracy}.
 
 Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \textt{AF\_smoothed} and \texttt{SD\_smoothed}.
 

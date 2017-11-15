@@ -5,12 +5,6 @@ library(ranger)
 library(dplyr)
 
 prep_image_no_scaling <- function(filename = 'image1.txt', path = 'image_data/'){
-  #This function takes in the image file name and path and 
-  #returns a dataframe including the original columns with 
-  #additional columns representing each feature smoothed. It also
-  #preps the dataframe for the models by making the labels into factors
-  #and getting rid of the observations with labeled "0".
-  
   collabs <- c('y','x','label','NDAI','SD','CORR','DF','CF','BF','AF','AN')
   
   # Reading-in image, setting column names
@@ -74,7 +68,8 @@ get_rf_prediction <- function(model, image){
   
   image_prediction_rf <- get_labels_from_prob(image_prediction_prob_rf$predictions[, 2])
   accuracy <- mean(y == image_prediction_rf)
-  return(accuracy)
+  return(list(accuracy = accuracy,
+              pred_class = image_prediction_rf))
 }
 
 get_labels_from_prob <- function(probabilities, thresh_lb = 0.4, thresh_ub = 0.6){
