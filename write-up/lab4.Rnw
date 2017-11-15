@@ -32,6 +32,9 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
 library(tidyverse)
 library(glmnet)
 library(knitr)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
 
 source('./R/data_processing_utils.R')
 source('./R/lasso_utils.R')
@@ -66,19 +69,21 @@ image3 <- prep_image(image3.plots)
 \centering
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image1.plots, image1.plots$label, "none")
 @
 \subcaption{expert labeled image1}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image2.plots, image2.plots$label, "none") +
+  remove_y
 @
 \subcaption{expert labeled image2}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image3.plots, image3.plots$label, "right") +
+  remove_y
 @
 \subcaption{expert labeled image1}
 \end{subfigure}
@@ -177,13 +182,15 @@ The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred
 rf_fit_orig <- get_rf_fit(image1, smooth_features = FALSE)
 rf_fit_orig_smo <- get_rf_fit(image1, smooth_features = TRUE)
 
-image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2)
-image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2)
-image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3)
-image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3)
+image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2.plots)
+image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2.plots)
+image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3.plots)
+image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3.plots)
+plotr(image2.plots, fill = image2.plots$label)
+plotr(image2.plots, fill = image2_rf_pred$pred_class)
 @
 
-Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred}, while on image 3 it was \Sexpr{image3_rf_pred}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred}, while on image 3 it was \Sexpr{image3_rf_smo_pred}.
+Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_smo_pred$accuracy}.
 
 Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \texttt{AF\_smoothed} and \texttt{SD\_smoothed}.
 
