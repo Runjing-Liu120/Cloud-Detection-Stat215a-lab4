@@ -178,11 +178,12 @@ The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred
 rf_fit_orig <- get_rf_fit(image1, smooth_features = FALSE)
 rf_fit_orig_smo <- get_rf_fit(image1, smooth_features = TRUE)
 
-image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2)
-image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2)
-image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3)
-image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3)
-plotr(image1.plots, fill = image1.plots$label)
+image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2.plots)
+image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2.plots)
+image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3.plots)
+image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3.plots)
+plotr(image2.plots, fill = image2.plots$label)
+plotr(image2.plots, fill = image2_rf_pred$pred_class)
 @
 
 Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_smo_pred$accuracy}.
