@@ -185,7 +185,7 @@ image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3)
 
 Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred}, while on image 3 it was \Sexpr{image3_rf_pred}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred}, while on image 3 it was \Sexpr{image3_rf_smo_pred}.
 
-Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \textt{AF\_smoothed} and \texttt{SD\_smoothed}.
+Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \texttt{AF\_smoothed} and \texttt{SD\_smoothed}.
 
 Another group of experiments were conducted on a new dataset where each pixel would have access to the features of its neighboring pixels, i.e., the pixels to the up, down, left and right directions. If we train the model on image 1, then the top 3 of the most important features are \texttt{NDAI, NDAI\_u} and \texttt{NDAI\_l}, which suggests that the neighboring pixels provide more information than its local features.
 
