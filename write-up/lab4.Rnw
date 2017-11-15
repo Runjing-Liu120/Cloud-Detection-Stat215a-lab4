@@ -87,11 +87,13 @@ knitr::include_graphics('./panda.jpg')
 \section{Models}
 
 \subsection{Feature smoothing}\label{feature_selection}
-In image data, neighboring pixels are generally not independent; in particular, there is reason to believe there to be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud, is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels. 
+In image data, neighboring pixels are generally not independent; in particular, there is reason to believe there to be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels. 
 
-Hence, similar to how the engineered features NDAI, CORR, and SD in ({\color{red} cite}) at a pixel takes information from its surrouding $8\times 8$ grid of pixels, we also smooth the features. In addition to the original eight features, we add eight more feautres that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
+Hence, similar to how the engineered features NDAI, CORR, and SD takes information from a surrouding $8\times 8$ grid of pixels, we also take in information from neighboring pixels. Instead of considering the original features, we consider features that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
 
-In our results, we will compare the predictive accuracy of algoirithms that only use the eight original features against those that use the smoothed features. 
+We also hope that this smoothing may give better test accuracy by ameliorating the effect of outliers that may exist in the dataset. 
+
+In our results, we will compare the predictive accuracy of algoirithms that use the eight original features against those that use the smoothed features. 
 
 \subsection{Logistic regression and LASSO}\label{lasso_descr}
 As a first attempt to predict the expert labels, we fit a logistic regression using the eight features, as well as the eight features plus their smoothed their smoothed values. 
@@ -251,7 +253,7 @@ ggplot(coeff_df) + geom_line(aes(x = log_lambda, y = coefficient, color = name))
   theme(legend.position="none")
 @
 \end{subfigure}
-\caption{adfa}
+\caption{The LASSO regression path; that is, we plot the values of the regression coefficients of the 16 features (eight original, eight smoothed) as a function of the penalty parameter $\lambda$. The vertical dotted line is the optimal $\lambda$ chosen by cross-validation. At this point, we see that there are three clearly non-zero coefficients: smoothed NDAI, smoothed CORR, and smoothed DF. }
 \label{fig:lasso_penalty}
 \end{figure}
 
