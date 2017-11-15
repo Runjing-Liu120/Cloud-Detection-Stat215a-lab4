@@ -26,6 +26,25 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
 @
 
 
+<<libraries>>=
+library(tidyverse)
+library(glmnet)
+
+source('./R/data_processing_utils.R')
+source('./R/lasso_utils.R')
+
+@
+
+<<load_data>>=
+# first two columns are coordinates
+# third columns are labels
+# next eight are original features
+# last eight are smoothed features 
+image1 <- prep_image(filename = 'image1.txt', path = '../image_data/')
+image2 <- prep_image(filename = 'image2.txt', path = '../image_data/')
+image3 <- prep_image(filename = 'image3.txt', path = '../image_data/')
+@
+
 \section{Introduction}
 \subsection{Source of data (RN)}
 - definitions/ data source
