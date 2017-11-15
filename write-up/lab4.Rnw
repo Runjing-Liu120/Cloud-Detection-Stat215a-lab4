@@ -215,7 +215,46 @@ knitr::include_graphics('./panda.jpg')
 \end{table}
 
 \subsection{Feature selection}
-Doing LASSO we found blah blah features to be important. 
+<<lasso_feat_selection, cache = TRUE>>=
+image12 <- rbind(image1, image2)
+
+labeled_indx <- which(image12$label != 0)
+X <- image12[labeled_indx, -c(1,2,3)] # use both smoothed and unsmoothed features
+y <- droplevels(image12$label[labeled_indx])
+
+fit_lasso12_path <- glmnet(as.matrix(X), y, family = "binomial")
+
+lasso_fit_all_feat <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = NULL)
+@
+The $L1$ penalty in the LASSO not only helps prevent overfitting, but the sparsity pattern also gives insight into which features are truly important for predicting cloud coverage. With this goal in mind, we fit the LASSO on the first two images with 16 features: the original 8 plus their smoothed versions, and see which regression coefficients are nonzero. The coefficients as a function of the penalty parameter is shown in figure~\ref{fig:lasso_penalty}. We choose the penalty parameter using 2-fold cross-validation with the two images as folds (see section~\ref{lasso_descr}) to choose an optimal lambda. At this optimal lambda, we see that only four features are active: smoothed NDAI, smoothed CORR, smoothed DF, and non-smoothed CORR, with the non-smoothed CORR coefficient being barely non-zero. Hence, this suggests that NDAI, CORR, and DF are the three most important features, and moreover, looking at the smoothed versions may be sufficient. 
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}{0.4\textwidth}
+<<lasso_path, cache = TRUE, fig.height=5, fig.width=6.5>>=
+coeff <- as.matrix(fit_lasso12_path$beta)
+feature_names <- rownames(coeff)
+
+coeff_vec <- as.vector(coeff)
+lambdas <- fit_lasso12_path$lambda
+
+coeff_df <- data.frame(coefficient = coeff_vec, 
+                       name = rep(feature_names, 100), 
+                       log_lambda = log(as.vector(t(replicate(16, lambdas)))))
+
+ggplot(coeff_df) + geom_line(aes(x = log_lambda, y = coefficient, color = name)) + 
+  geom_vline(xintercept=log(lasso_fit_all_feat$cv_results$lambda_best), 
+             linetype="dotted") + 
+  annotate('text', x = -7.8, y = 4, label = "NDAI_smoothed", size = 4) + 
+  annotate('text', x = -5.2, y = 1.75, label = "CORR_smoothed", size = 4) + 
+  annotate('text', x = -4.8, y = 0.3, label = "DF_smoothed",  size = 4) + 
+  theme(legend.position="none")
+@
+\end{subfigure}
+\caption{adfa}
+\label{fig:lasso_penalty}
+\end{figure}
+
 
 Doing RF we found blah blah features to be important. 
 

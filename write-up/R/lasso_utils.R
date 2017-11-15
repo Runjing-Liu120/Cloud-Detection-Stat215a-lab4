@@ -66,13 +66,18 @@ get_lasso_fit_2fold_cv <- function(image1, image2, smooth_features = FALSE,
   # where the two folds are the two images
   # thresh are the probabilties below/above which we label 1 or -1
   # in between we label 0
+  # if smooth_features = TRUE, we use the 8 smoothed features; if FALSE, we use 
+  # the 8 original features; if NULL, we use all the features
   
   # whether to take smoothed features or not
-  if(smooth_features){
-    feature_names <- colnames(image1)[grep("_smoothed", colnames(image1))]
-  }else{
-    feature_names <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN')
-  }
+  if(is.null(smooth_features)){
+    feature_names <- colnames(image1)[-c(1,2,3)] 
+  }else{if(smooth_features){
+          feature_names <- colnames(image1)[grep("_smoothed", colnames(image1))]
+        }else{
+          feature_names <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN')
+        }}
+
   
   image1_labeled_indx <- which(image1$label != 0)
   image2_labeled_indx <- which(image2$label != 0)
