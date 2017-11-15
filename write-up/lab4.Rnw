@@ -110,7 +110,7 @@ We chose to do 2-fold cross-validation since in image data, each pixel is likely
 We also trained several Random Forest models as classifiers to predict the image labels, using the original eight features and optionally the smoothed features. The number of decision trees in each model is chosen to be 500. We make the trees to return probabilities of the predicted labels instead of binary responses, and then apply thresholding (as we did in logisitic regression) to get the predicted labels.
 
 \subsubsection*{Model selection and validation}
-The model was first trained on image 1, and then the model was tested on image2 and image 3. The 2-fold cross validation was performed in that we also trained the model on image 3, and tested on image 1 and image 2. We use Random Forest as an out-of-the-box algorithm so there are no parameters to be tuned.
+The model was first trained on image 1, and then the model was tested on image2 and image 3. The 2-fold cross validation was performed in that we also trained the model on image 3, and tested on image 1 and image 2. We use Random Forest as an out-of-the-box algorithm so there are no parameters to be tuned. 
 
 \subsection{SVM (RN) }
 \subsubsection*{Model selection and validation}
@@ -163,9 +163,9 @@ The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred
 \subsubsection*{Random Forest}
 
 <<rf, cache = TRUE, results = 'hide'>>=
-image1_neighbor <- add_neighbor_info(image1)
-image2_neighbor <- add_neighbor_info(image2)
-image3_neighbor <- add_neighbor_info(image3)
+# image1_neighbor <- add_neighbor_info(image1)
+# image2_neighbor <- add_neighbor_info(image2)
+# image3_neighbor <- add_neighbor_info(image3)
 
 rf_fit_orig <- get_rf_fit(image1, smooth_features = FALSE)
 rf_fit_orig_smo <- get_rf_fit(image1, smooth_features = TRUE)
@@ -175,8 +175,12 @@ image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2)
 image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3)
 image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3)
 @
-predictive accuracy on second image vs. third image. 
-predictive accuracy on smoothed vs. non-smoothed features. 
+
+Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred}, while on image 3 it was \Sexpr{image3_rf_pred}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred}, while on image 3 it was \Sexpr{image3_rf_smo_pred}.
+
+Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \textt{AF\_smoothed} and \texttt{SD\_smoothed}.
+
+Another group of experiments were conducted on a new dataset where each pixel would have access to the features of its neighboring pixels, i.e., the pixels to the up, down, left and right directions. If we train the model on image 1, then the top 3 of the most important features are \texttt{NDAI, NDAI\_u} and \texttt{NDAI\_l}, which suggests that the neighboring pixels provide more information than its local features.
 
 \subsubsection*{Support Vector Machine}
 predictive accuracy on second image vs. third image. 

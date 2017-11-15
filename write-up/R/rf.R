@@ -4,17 +4,25 @@ library(glmnet)
 library(ranger)
 library(dplyr)
 
-get_labels_from_prob <- function(probabilities, thresh_lb = 0.4, thresh_ub = 0.6){
-  # get +1/-1/0 labels from a vector of probabilities
-  # probabilities above thresh_ub are labeled +1
-  # probabilities above thresh_lb are labeled -1
-  # in between are 0
+get_rf_fit <- function(image, smooth_features = FALSE){
+  labeled_indx <- which(image$label != 0)
+  labeled_image <- image[labeled_indx, ]
+  y <- droplevels(labeled_image$label)
   
-  labels <- 1.0 * (probabilities > thresh_ub) + 
-    -1.0 * (probabilities < thresh_lb) 
+  if(smooth_features){
+    X <- image[, grep("_smoothed", colnames(image))] # get smoothed features
+  }
+  else{
+    feature_names <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN')
+    X <- image[, feature_names]
+  }
+  data <- cbind(y, X)
   
-  return(labels)
-  
+  rf_fit <- ranger(y ~ ., data = data, 
+                   num.trees = 500, 
+                   probability = TRUE, 
+                   importance = 'impurity')
+  return(rf_fit)
 }
 
 get_rf_prediction <- function(model, image){
@@ -37,30 +45,23 @@ get_rf_prediction <- function(model, image){
                                       type = 'response')
   
   image_prediction_rf <- get_labels_from_prob(image_prediction_prob_rf$predictions[, 2])
-  accuracy <- mean(image$label == image_prediction_rf)
+  accuracy <- mean(y == image_prediction_rf)
   return(accuracy)
 }
 
-get_rf_fit <- function(image, smooth_features = FALSE){
-  labeled_indx <- which(image$label != 0)
-  labeled_image <- image[labeled_indx, ]
-  y <- droplevels(labeled_image$label)
+get_labels_from_prob <- function(probabilities, thresh_lb = 0.4, thresh_ub = 0.6){
+  # get +1/-1/0 labels from a vector of probabilities
+  # probabilities above thresh_ub are labeled +1
+  # probabilities above thresh_lb are labeled -1
+  # in between are 0
   
-  if(smooth_features){
-    X <- image[, grep("_smoothed", colnames(image))] # get smoothed features
-  }
-  else{
-    feature_names <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN')
-    X <- image[, feature_names]
-  }
-  data <- cbind(y, X)
+  labels <- 1.0 * (probabilities > thresh_ub) + 
+    -1.0 * (probabilities < thresh_lb) 
   
-  rf_fit <- ranger(y ~ ., data = data, 
-                   num.trees = 500, 
-                   probability = TRUE, 
-                   importance = 'impurity')
-  return(rf_fit)
+  return(labels)
+  
 }
+
 
 add_neighbor_info <- function(image){
   image_l <- image %>%
