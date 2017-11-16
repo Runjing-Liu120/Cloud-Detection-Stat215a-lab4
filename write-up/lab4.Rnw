@@ -175,9 +175,11 @@ As a baseline, we fit a simple logistic regression. We train the model using the
 \subsubsection*{LASSO}
 
 <<lasso, cache = TRUE, results = 'hide'>>=
+# fit lasso using 2-fold CV on first two images
 lasso_fit <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = FALSE)
 lasso_fit_smo <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = TRUE)
 
+# predict on third image
 image3_lasso_pred <- get_lasso_prediction(lasso_fit$fit, image3.plots)
 image3_lasso_smo_pred <- get_lasso_prediction(lasso_fit_smo$fit, image3.plots)
 @
@@ -197,19 +199,10 @@ rf_fit_orig_smo <- get_rf_fit(image12, smooth_features = TRUE)
 @
 
 <<rf_pred, cache = TRUE, results = 'hide'>>=
-tmp <- 0
+# predict on image 3
+
 image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3.plots)
 image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3.plots)
-@
-
-<<rf_plot>>=
-print(image3_rf_pred$accuracy)
-length(image3_rf_pred$pred_class)
-
-print(image3_rf_smo_pred$accuracy)
-length(image3_rf_smo_pred$pred_class)
-
-#plotr(image2.plots, fill = image2_rf_pred$pred_class)
 @
 
 After training the random forest on the first two images with the original features, the predictive accuracy on image 3 was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 3 was \Sexpr{image3_rf_smo_pred$accuracy}.
@@ -222,16 +215,23 @@ After training the random forest on the first two images with the original featu
 
 <<svm_fit, cache = TRUE, results = 'hide'>>=
 # warning: this block takes awhile
+
+# fit SVM using 2-fold CV on first two images
 svm_fit <- get_svm_fit_2fold_cv(image1, image2, smooth_features = FALSE)
 @
 
 <<svm_fit_smo, cache = TRUE, results = 'hide'>>=
 # warning: this block takes awhile
+
+# fit SVM using 2-fold CV on first two images
+# use smooth features
 svm_fit_smo <- get_svm_fit_2fold_cv(image1, image2, smooth_features = TRUE)
 @
 
 <<svm_pred, cache = TRUE>>=
 # why the fuck does 'predict' take so long too 
+
+# predict on third image
 image3_svm_pred <- get_svm_prediction(svm_fit$fit, image3.plots)
 image3_svm_smo_pred <- get_svm_prediction(svm_fit_smo$fit, image3.plots)
 @
@@ -329,6 +329,9 @@ set_axis_size <- theme(axis.text=element_text(size=axis_element_size),
 @
 
 <<lasso_feat_selection, cache = TRUE, results = 'hide'>>=
+# fit lasso on all 16 features
+# we shall examine the sparisity in the next chunk
+
 image12 <- rbind(image1, image2)
 
 labeled_indx <- which(image12$label != 0)
@@ -345,6 +348,8 @@ The $L1$ penalty in the LASSO not only helps prevent overfitting, but the sparsi
 \centering
 \begin{subfigure}{0.4\textwidth}
 <<lasso_path, cache = TRUE, fig.height=5, fig.width=6.5>>=
+# get lasso fit path
+
 coeff <- as.matrix(fit_lasso12_path$beta)
 feature_names <- rownames(coeff)
 
@@ -374,6 +379,9 @@ We can also get feature importances from the random forest by looking at the mea
 \centering
 \begin{subfigure}{0.4\textwidth}
 <<rf_feature_importance, cache = TRUE>>=
+# fit rf to all 16 features, on images 1 and 2
+# we shall examine feature importances
+
 image12 <- rbind(image1, image2)
 
 labeled_indx <- which(image12$label != 0)
@@ -389,6 +397,7 @@ fit_rf_16features <- ranger(y ~ .,
 @
 
 <<rf_feature_importance_plot, cache = TRUE, fig.height=7, fig.width=10>>=
+# examine feature importances
 var_imp <- sort(fit_rf_16features$variable.importance) / 
   sum(fit_rf_16features$variable.importance)
 features <- names(var_imp)
