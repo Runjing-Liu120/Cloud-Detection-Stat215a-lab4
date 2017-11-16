@@ -126,7 +126,7 @@ As a first attempt to predict the expert labels, we fit a logistic regression us
 However, to guard against overfitting, we then run a logistic regression but with an $L1$ penalty. The strength of this penalty was chosen by 2-fold cross validation, as described in section~\ref{CV_descr} below. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
 
 
-\subsection{RF (YN) }\label{rf_descr}
+\subsection{RF}\label{rf_descr}
 We also trained several Random Forest models as classifiers to predict the image labels, using the original eight features and optionally the smoothed features. The number of decision trees in each model is chosen to be 500. We make the trees to return probabilities of the predicted labels instead of binary responses, and then apply thresholding (as we did in logisitic regression) to get the predicted labels. A pixel is labeled as +1 if the predicted probability is above 0.6, and -1 if the probability is below 0.4. It will be labeled as 0 if the probability is between 0.4 and 0.6.
 
 \subsection{SVM (RN) }
