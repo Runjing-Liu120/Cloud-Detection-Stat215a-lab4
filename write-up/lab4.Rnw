@@ -28,7 +28,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
 @
 
 
-<<libraries, cache = FALSE>>=
+<<libraries, cache = TRUE>>=
 library(tidyverse)
 library(glmnet)
 library(knitr)
@@ -172,6 +172,8 @@ lasso_fit_smo <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = TRUE)
 
 image3_lasso_pred <- get_lasso_prediction(lasso_fit$fit, image3)
 image3_lasso_smo_pred <- get_lasso_prediction(lasso_fit_smo$fit, image3)
+
+dafd <- 0
 @
 
 \subsubsection*{LASSO}

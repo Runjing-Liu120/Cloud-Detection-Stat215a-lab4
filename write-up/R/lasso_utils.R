@@ -1,3 +1,4 @@
+library(glmnet)
 get_logistic_fit <- function(image, smooth_features = FALSE){
   # takes an image that is the output of prep_image
   # and returns a logistic regression fit
