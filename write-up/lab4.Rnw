@@ -127,12 +127,7 @@ However, to guard against overfitting, we then run a logistic regression but wit
 
 
 \subsection{RF (YN) }\label{rf_descr}
-We also trained several Random Forest models as classifiers to predict the image labels, using the original eight features and optionally the smoothed features. The number of decision trees in each model is chosen to be 500. We make the trees to return probabilities of the predicted labels instead of binary responses, and then apply thresholding (as we did in logisitic regression) to get the predicted labels.
-
-\subsubsection*{Model selection and validation}
-{\color{red} remove this section, we'll have a general model selection and validation section below. }
-
-The model was first trained on image 1, and then the model was tested on image2 and image 3. The 2-fold cross validation was performed in that we also trained the model on image 3, and tested on image 1 and image 2. We use Random Forest as an out-of-the-box algorithm so there are no parameters to be tuned. 
+We also trained several Random Forest models as classifiers to predict the image labels, using the original eight features and optionally the smoothed features. The number of decision trees in each model is chosen to be 500. We make the trees to return probabilities of the predicted labels instead of binary responses, and then apply thresholding (as we did in logisitic regression) to get the predicted labels. A pixel is labeled as +1 if the predicted probability is above 0.6, and -1 if the probability is below 0.4. It will be labeled as 0 if the probability is between 0.4 and 0.6.
 
 \subsection{SVM (RN) }
 Finally, we also used support vector machines for classification. However, we only used three features: NDAI, CORR, and DF, since these were features found to be important by the LASSO (see section~\ref{feature_selection}). We also fit the SVM with the smoothed version of these three features. The cost for constraint violation was chosen with 2-fold cross-validation as described in section~\ref{CV_descr}. 
@@ -197,8 +192,9 @@ The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred
 # image2_neighbor <- add_neighbor_info(image2)
 # image3_neighbor <- add_neighbor_info(image3)
 
-rf_fit_orig <- get_rf_fit(image1, smooth_features = FALSE)
-rf_fit_orig_smo <- get_rf_fit(image1, smooth_features = TRUE)
+image12 <- rbind(image1, image2)
+rf_fit_orig <- get_rf_fit(image12, smooth_features = FALSE)
+rf_fit_orig_smo <- get_rf_fit(image12, smooth_features = TRUE)
 
 image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2.plots)
 image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2.plots)
@@ -206,14 +202,9 @@ image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3.plots)
 image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3.plots)
 @
 
-<<rf_plot>>=
-#plotr(image2.plots, fill = image2.plots$label)
-#plotr(image2.plots, fill = image2_rf_pred$pred_class)
-@
+Without feature smoothing, the predictive accuracy on image 3 is \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on  image 3 was \Sexpr{image3_rf_smo_pred$accuracy}. In contrast, The training accuracy on image 2 without smoothing is \Sexpr{image2_rf_pred$accuracy}, and the training accuracy with smoothing is \Sexpr{image2_rf_smo_pred$accuracy}. The huge gap suggests that there is overfitting.
 
-%Without feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 2 was \Sexpr{image2_rf_smo_pred$accuracy}, while on image 3 it was \Sexpr{image3_rf_smo_pred$accuracy}.
-
-Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \texttt{AF\_smoothed} and \texttt{SD\_smoothed}.
+A noticable phenomenon during the training of random forest models is that if we do not perform feature normalizations, then the prediction accuracy on image 3 will change dramatically. It could be due to the fact that we do the scaling on 3 images independently, i.e., we use their own mean and standard deviation to normalize each feature. However, since the assumption that these 3 images have identical distribution could be wrong, after normalizing each feature will be biased and the tree algorithm would not adapt to such changes.
 
 Another group of experiments were conducted on a new dataset where each pixel would have access to the features of its neighboring pixels, i.e., the pixels to the up, down, left and right directions. If we train the model on image 1, then the top 3 of the most important features are \texttt{NDAI, NDAI\_u} and \texttt{NDAI\_l}, which suggests that the neighboring pixels provide more information than its local features.
 
@@ -337,8 +328,21 @@ ggplot(coeff_df) + geom_line(aes(x = log_lambda, y = coefficient, color = name))
 \label{fig:lasso_penalty}
 \end{figure}
 
+Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 and 2 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \texttt{AF\_smoothed} and \texttt{SD\_smoothed}. The figure \ref{fig:rf_importance} shows the Gini coefficient of the model in decreasing order.
 
-Doing RF we found blah blah features to be important. 
+\begin{figure}[h]
+\centering
+<<rf_feature_importance>>=
+df <- data.frame(rf_fit_orig$variable.importance)
+names(df) <- 'Variable_Importance'
+df$Variable <- rownames(df)
+ggplot(data=df, aes(x = reorder(Variable, -Variable_Importance), y = Variable_Importance)) +
+  geom_bar(position = 'identity', stat = 'identity') +
+  labs(x="Variable",y="Variable Importance") 
+@
+\caption{Variable importance of the Random Forest model by GINI coefficient}
+\label{fig:rf_importance}
+\end{figure}
 
 Hence SVM only used these blah blah features. 
 
