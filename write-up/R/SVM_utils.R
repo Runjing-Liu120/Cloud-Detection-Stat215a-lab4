@@ -110,16 +110,12 @@ get_svm_prediction <- function(fit, image3, smoothsv = TRUE){
   }
   
   labeled_indx <- which(image3$label != 0)
-  labeled_image <- image3[labeled_indx, ]
-  
-  y <- droplevels(labeled_image$label)
-  
-  X <- labeled_image[, feature_names]
-  
-  y_pred_class <- predict(fit, newdata = X) 
+
+  y_pred_class <- predict(fit, newdata = image3[, feature_names]) 
 
   # get predictive accuracy
-  pred_accuracy <- mean(y_pred_class == y)
+  pred_accuracy <- mean(y_pred_class[labeled_indx] == 
+                          droplevels(image3$label[labeled_indx]))
   
   return(list(pred_class = y_pred_class, 
               accuracy = pred_accuracy))

@@ -151,44 +151,35 @@ We chose to do 2-fold cross-validation since in image data, each pixel is likely
 \section{Results}
 
 \subsection{Predictive accuracy}
-We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines. We examine the the difference in prediction accuracy on image2 and image3, and examine the benefits of having smoothed features. Our main results are summarized in table~\ref{tab:acc_results}. 
-
-
+We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines, and compare the benefits, if any, of using the smoothed features. Our main results are summarized in table~\ref{tab:acc_results}. 
 \subsubsection*{Logistic regression}
 
 <<logistic_reg, cache = TRUE>>=
-# fit logistic regression to first image
-logistic_fit <- get_logistic_fit(image1, smooth_features = FALSE)
-logistic_fit_smo <- get_logistic_fit(image1, smooth_features = TRUE)
+tmp <- 0
 
-# predict on second image
-image2_pred <- get_logistic_prediction(logistic_fit, image2)
-image2_pred_smo <- get_logistic_prediction(logistic_fit_smo, image2)
+# fit logistic regression to first image
+image12 <- rbind(image1, image2)
+logistic_fit <- get_logistic_fit(image12, smooth_features = FALSE)
+logistic_fit_smo <- get_logistic_fit(image12, smooth_features = TRUE)
 
 # predict on third image
-image3_pred <- get_logistic_prediction(logistic_fit, image3)
-image3_pred_smo <- get_logistic_prediction(logistic_fit_smo, image3)
+image3_pred <- get_logistic_prediction(logistic_fit, image3.plots)
+image3_pred_smo <- get_logistic_prediction(logistic_fit_smo, image3.plots)
 @
 
-As a baseline, we use a simple logistic regression on the original eight features to predict the expert labels. We fit the model to the first image, and examine predictive accuracy on the second and third images. With the original features, the predictive accuracy on the second image is \Sexpr{image2_pred$accuracy}, while the predictive accuracy on the third image is \Sexpr{image3_pred$accuracy}. 
+As a baseline, we use a simple logistic regression on the original eight features to predict the expert labels. We fit the model using the first and second images, and our predictive accuracy on the third image with the original features is \Sexpr{image3_pred$accuracy}. Using the smoothed features, we get an accuracy of \Sexpr{image3_pred_smo$accuracy}. Therefore, it appears that smoothing the features did not have a significant effect when doing logistic regression.  
 
-We also fit a logistic regression on the smoothed features as described in section~\ref{smoothed_features}. Again fitting to image1, the predictive accuracies on images 2 and 3 are \Sexpr{image2_pred_smo$accuracy} and \Sexpr{image3_pred_smo$accuracy}, respectively. Therefore, it appears that smoothing the features did not have a significant effect when doing logistic regression.  
+\subsubsection*{LASSO}
 
 <<lasso, cache = TRUE, results = 'hide'>>=
 lasso_fit <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = FALSE)
 lasso_fit_smo <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = TRUE)
 
-image3_lasso_pred <- get_lasso_prediction(lasso_fit$fit, image3)
-image3_lasso_smo_pred <- get_lasso_prediction(lasso_fit_smo$fit, image3)
+image3_lasso_pred <- get_lasso_prediction(lasso_fit$fit, image3.plots)
+image3_lasso_smo_pred <- get_lasso_prediction(lasso_fit_smo$fit, image3.plots)
 @
 
-\subsubsection*{LASSO}
-We now fit the logistic LASSO, which encourages sparsity in the regression coefficients.
- Our goal in doing so is two fold: firstly, we hope that the $L1$ penalty will help avoid overfitting to the training set; and secondly, we hope that the nonzero coefficients found by the LASSO will give insight to the important features needed for cloud detection. 
- 
-Unlike in the normal logistic regression, we here must do cross-validation to choose the regularization parameter. We do so using 2-fold CV as with image1 as the first fold and image2 as the second fold as described in section~\ref{lasso_descr}. The third image was held out as a test set. 
-
-The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred$accuracy} when using the original features, and \Sexpr{image3_lasso_smo_pred$accuracy} when using the smoothed features. Like in the logistic regression, smoothing the features did not appear to make a big difference here. 
+We now examine the accuracy of the LASSO, trained on the first two images with cross validation as described in ~\ref{CV_descr}. The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred$accuracy} when using the original features, and \Sexpr{image3_lasso_smo_pred$accuracy} when using the smoothed features. Like in the logistic regression, smoothing the features did not appear to make a big difference here. 
 
 \subsubsection*{Random Forest}
 
@@ -196,6 +187,7 @@ The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred
 # image1_neighbor <- add_neighbor_info(image1)
 # image2_neighbor <- add_neighbor_info(image2)
 # image3_neighbor <- add_neighbor_info(image3)
+tmp <- 0
 
 rf_fit_orig <- get_rf_fit(image1, smooth_features = FALSE)
 rf_fit_orig_smo <- get_rf_fit(image1, smooth_features = TRUE)
@@ -230,42 +222,57 @@ svm_fit_smo <- get_svm_fit_2fold_cv(image1, image2, smooth_features = TRUE)
 @
 
 <<svm_pred, cache = TRUE>>=
-# why the fuck does 'predict' take so long too goddamnit
 tmp <- 0
-image3_svm_pred <- get_svm_prediction(svm_fit$fit, image3)
-image3_svm_smo_pred <- get_svm_prediction(svm_fit_smo$fit, image3)
+# why the fuck does 'predict' take so long too goddamnit
+image3_svm_pred <- get_svm_prediction(svm_fit$fit, image3.plots)
+image3_svm_smo_pred <- get_svm_prediction(svm_fit_smo$fit, image3.plots)
 @
 
 <<>>=
 print(image3_svm_pred$accuracy)
 print(image3_svm_smo_pred$accuracy)
-
 @
 
+Finally, we examine prediction using SVM. As described in section \ref{CV_descr}, the first two images were used as a training, set and 2-fold cross-validation was used to set the cost of contraint violation. 
+
+Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be important by the LASSO (see section~\ref{feature_selection}). Using these tree features, predictive
+
+\begin{table}[h]
+ \centering
+ \begin{tabular}{lllll}
+ & logistic & LASSO & RF & SVM \\
+ smoothed features & \Sexpr{image3_pred$accuracy} & 
+ \Sexpr{image3_lasso_pred$accuracy}& 100\% !! & 100\% !!\\
+ original features & \Sexpr{image3_pred_smo$accuracy} &  \Sexpr{image3_lasso_pred$accuracy} & 99\% !! & 99\% !!
+ \end{tabular}
+\caption{accuracy on test set}
+\label{tab:acc_results}
+\end{table}
 
 \begin{figure}[h]
 \centering
-\begin{subfigure}[t]{0.3\textwidth}
-<<>>=
-plotr(image3.plots, image3.plots$label, "right") +
+\begin{subfigure}[t]{0.25\textwidth}
+<<expert_image3, cache = TRUE>>=
+plotr(image3.plots, image3.plots$label, "none") +
   remove_y
 @
-\subcaption{expert labeled image3}
+\subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.3\textwidth}
-<<>>=
-plotr(image3.plots, image3.plots$label, "right") +
+\begin{subfigure}[t]{0.25\textwidth}
+<<lasso_image3, cache = TRUE>>=
+plotr(image3.plots, image3_lasso_pred$pred_class, "none") +
   remove_y
 @
-\subcaption{lasso prediction on image 3}
-\end{subfigure}\\
-\begin{subfigure}[t]{0.3\textwidth}
-<<>>=
-knitr::include_graphics('./panda.jpg')
-@
-\subcaption{SVM prediction on image 3}
+\subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.3\textwidth}
+\begin{subfigure}[t]{0.25\textwidth}
+<<>>=
+plotr(image3.plots, image3_lasso_pred$pred_class, "none") +
+  remove_y
+@
+\subcaption{}
+\end{subfigure}
+\begin{subfigure}[t]{0.25\textwidth}
 <<>>=
 knitr::include_graphics('./panda.jpg')
 @
@@ -274,27 +281,6 @@ knitr::include_graphics('./panda.jpg')
 \caption{Expertly labeled figures}
 \end{figure}
 
-\begin{table}[h]
-\centering
-\begin{tabular}{cc|cccc}
- & & \multicolumn{4}{c}{Predictive accuracy} \\
- & & logistic regression & LASSO & RF & SVM \\
-    \hline
-    \multirow{2}{*}{Image2}& smoothed features & 
-    \Sexpr{image2_pred_smo$accuracy} & NA & 100 & 100\\
-    & original features & 
-    \Sexpr{image2_pred$accuracy} & NA & 100 & 100\\
-    \hline
-    \hline
-    \multirow{2}{*}{Image3}& smoothed features & 
-    \Sexpr{image3_pred_smo$accuracy} & \Sexpr{image3_lasso_smo_pred$accuracy} & 100 & 100\\
-    &original features & 
-    \Sexpr{image3_pred$accuracy} & \Sexpr{image3_lasso_pred$accuracy} & 100 & 100\\
-    \hline
-\end{tabular}
-\caption{accuracy on test set}
-\label{tab:acc_results}
-\end{table}
 
 \subsection{Feature selection}\label{feature_selection}
 <<lasso_feat_selection, cache = TRUE, results = 'hide'>>=

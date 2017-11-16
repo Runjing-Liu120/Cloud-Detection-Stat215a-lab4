@@ -33,10 +33,7 @@ get_logistic_prediction <- function(fit, image_test){
   # else the feature would be called 'NDAI' without the '_smoothed'
   
   labeled_indx <- which(image_test$label != 0)
-  labeled_image <- image_test[labeled_indx, ]
-  
-  y <- droplevels(labeled_image$label)
-  
+
   if(smooth_features){
     X <- image_test[, grep("_smoothed", colnames(image_test))] # get smoothed features
   } else{
@@ -44,7 +41,6 @@ get_logistic_prediction <- function(fit, image_test){
     X <- image_test[, feature_names]
   }
   
-  data <- cbind(y, X)
   y_pred_prob <- predict(fit, 
                 newdata = X,
                 type = 'response') # returns a probability of being +1 (vs. -1)
@@ -53,7 +49,8 @@ get_logistic_prediction <- function(fit, image_test){
   y_pred_class <- 1.0 * (y_pred_prob > 0.5) + (-1.0) * (y_pred_prob < 0.5)
   
   # get predictive accuracy
-  pred_accuracy <- mean(y_pred_class == y)
+  pred_accuracy <- mean(y_pred_class[labeled_indx] == 
+                          image_test$label[labeled_indx])
   
   return(list(pred_prob = y_pred_prob, 
               pred_class = y_pred_class, 
@@ -153,11 +150,8 @@ get_lasso_prediction <- function(fit, image3){
   }
   
   labeled_indx <- which(image3$label != 0)
-  labeled_image <- image3[labeled_indx, ]
-  
-  y <- droplevels(labeled_image$label)
-  
-  X <- labeled_image[, feature_names]
+  X <- image3[, feature_names]
+  print(dim(X))
   
   y_pred_prob <- predict(fit, 
                          newx = as.matrix(X),
@@ -167,7 +161,7 @@ get_lasso_prediction <- function(fit, image3){
   y_pred_class <- 1.0 * (y_pred_prob > 0.5) + (-1.0) * (y_pred_prob < 0.5)
   
   # get predictive accuracy
-  pred_accuracy <- mean(y_pred_class == y)
+  pred_accuracy <- mean(y_pred_class[labeled_indx] == image3$label[labeled_indx])
   
   return(list(pred_prob = y_pred_prob, 
               pred_class = y_pred_class, 
