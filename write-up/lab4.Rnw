@@ -23,7 +23,7 @@
 \maketitle
 <<setup, echo = FALSE>>=
 # set defaults for future code chunks
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
                       dev='png', dpi = 300)
 @
 
@@ -56,7 +56,7 @@ remove_y <-   theme(axis.title.y=element_blank(),
 # first two columns are coordinates
 # third columns are labels
 # next eight are original features
-# last eight are smoothed features
+# last eight are smoothed features 
 
 path = '../image_data/'
 
@@ -106,53 +106,61 @@ plotr(image3.plots, image3.plots$label, "right") +
 \subsection{EDA (RN)}
 - Differences between angle radiances
 - cloud/nocloud angles
-- cloud/nocloud
-
-\section{Models}
-We describe here the four models used: logistic regression, LASSO, random forest, and support vector machines. We also describe the alternative smoothed features we considered.
+- cloud/nocloud 
 
 \subsection{Feature smoothing}\label{feature_smoothing}
-In image data, neighboring pixels are generally not independent; in particular, there is usually be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels.
+In our analysis, we will consider not only the eight features, but also smoothed versions of them. We do this because in image data, neighboring pixels are generally not independent; in particular, there is usually be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels. 
 
-Hence, similar to how the engineered features NDAI, CORR, and SD takes information from a surrouding $8\times 8$ grid of pixels, we also take in information from neighboring pixels. Instead of considering the original features, we consider features that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors.
+Hence, inspired by how the engineered features NDAI, CORR, and SD takes radiances from a surrouding $8\times 8$ grid of pixels, we also take in information from neighboring pixels. Instead of considering the original features, we consider features that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
 
-We also hope that this smoothing may give better test accuracy by ameliorating the effect of outliers that may exist in the dataset.
+We also hope that this smoothing may give better test accuracy by ameliorating the effect of outliers that may exist in the dataset. 
 
-In our results, we will compare the predictive accuracy of algorithms that use the eight original features against those that use the smoothed features.
+In our results, we will compare the predictive accuracy of algorithms that use the eight original features against those that use the smoothed features. 
+
+
+\section{Models}
+We describe here the four algorithms used: logistic regression, logistic LASSO, random forest, and support vector machines. 
 
 \subsection{Logistic regression and LASSO}\label{lasso_descr}
-As a first attempt to predict the expert labels, we fit a logistic regression using the original eight features, as well the smoothed features.
+As a first attempt to predict the expert labels, we fit a logistic regression using the first two images as our training set. 
 
-However, to guard against overfitting, we then run a logistic regression but with an $L1$ penalty. The strength of this penalty was chosen by 2-fold cross validation, as described in section~\ref{CV_descr} below. In doing so, we hope that this regularization will give us better test accuracy by not overfitting to the training set, and it has the added benefit of selecting the important features needed for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features.
+However, to guard against overfitting, we then tried the logistic LASSO; that is, we run a logistic regression with an $L1$ penalty. The strength of this penalty was chosen by 2-fold cross validation using the first two images, as described in section~\ref{CV_descr} below. By doing LASSO, we hope that the regularization will give us better test accuracy by not overfitting to the training set, and the sparsity has the added benefit of suggesting which features are necessary for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
 
 
 \subsection{RF}\label{rf_descr}
-We also trained several Random Forest models as classifiers to predict the image labels, using the original eight features and optionally the smoothed features. The number of decision trees in each model is chosen to be 500. We make the trees to return probabilities of the predicted labels instead of binary responses, and then apply thresholding (as we did in logisitic regression) to get the predicted labels. A pixel is labeled as +1 if the predicted probability is above 0.6, and -1 if the probability is below 0.4. It will be labeled as 0 if the probability is between 0.4 and 0.6.
+Since the paper {\color{red} cite, name the paper} made its predictions by thresholding the features, it seemed natural to see if a random forest could make better predictions, since a random forest essentially uses multiple layers of thresholding to partition the feature space. 
 
-\subsection{SVM (RN) }
-Finally, we also used support vector machines for classification. However, we only used three features: NDAI, CORR, and DF, since these were features found to be important by the LASSO (see section~\ref{feature_selection}). We also fit the SVM with the smoothed version of these three features. The cost for constraint violation was chosen with 2-fold cross-validation as described in section~\ref{CV_descr}.
+Our random forest was trained on the first two images. At each node, 2 features were tested to determine the split and trees were grown to purity. The forest consisted of 500 trees. 
+
+% We make the trees to return probabilities of the predicted labels instead of binary responses, and then apply thresholding (as we did in logisitic regression) to get the predicted labels.
+% 
+% \subsubsection*{Model selection and validation}
+% {\color{red} remove this section, we'll have a general model selection and validation section below. }
+% 
+% The model was first trained on image 1, and then the model was tested on image2 and image 3. The 2-fold cross validation was performed in that we also trained the model on image 3, and tested on image 1 and image 2. We use Random Forest as an out-of-the-box algorithm so there are no parameters to be tuned. 
+
+\subsection{SVM}
+Finally, we also used support vector machines for classification. However, we only gave the SVM three features: NDAI, CORR, and DF, since these were features found to be important by the LASSO (see section~\ref{feature_selection}). The cost for constraint violation was chosen with 2-fold cross-validation as described in section~\ref{CV_descr}. 
 
 \subsection{Model selection and validation}\label{CV_descr}
-We used the first two images as our training set, and hold out the third image as a test set. Hence, all accuracy measures are given by predictions on this third test set.
+We used the first two images as our training set, and hold out the third image as a test set. To measure prediction accuracies, we only use the pixels with expert labels, ignoring the unlabeled pixels. 
 
-When parameters needed to be tuned, we used 2-fold cross-validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The predictive accuracy of these two folds are averaged, and we choose the parameter to maximize this averaged predictive accuracy.
+When parameters needed to be tuned, we used 2-fold cross-validation the first two images (our training set) with an entire image as one fold. In other words, we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The predictive accuracy of these two folds are averaged, and we choose the parameter to maximize this averaged predictive accuracy. 
 
-For SVM, we used this procedure to find the cost parameter for constraint violation; for LASSO, we used CV to find for the the strength of the L1 penalty.
+For SVM, we used this procedure to find the cost parameter for constraint violation; for LASSO, we used CV to find for the the strength of the L1 penalty. 
 
-We chose to do 2-fold cross-validation since in image data, each pixel is likely not independent. A given pixel is likely to be similar to its neighbors; for example, from figure~\ref{fig:expert_labels} a cloud pixel is usually surrounded by by other cloudy pixels, and an ice pixel is usually surrounded by other ice pixels. Hence, if we randomly split an image into K-folds, these folds are not independent, and our accuracy measurement will be over-optimstic. Our choice to do 2-fold cross-validation rests on the assumption that while individual pixels are not independent, we assume that the two images are independent. We hope that this independence will give more realistic accuracy measurements.
-
-
+We chose to do 2-fold cross-validation since in image data, each pixel is likely not independent. A given pixel is likely to be similar to its neighbors; for example, from figure~\ref{fig:expert_labels} a cloud pixel is usually surrounded by by other cloudy pixels, and an ice pixel is usually surrounded by other ice pixels. Hence, if we randomly split an image into K-folds, these folds are not independent, and our accuracy measurement will be over-optimstic. Our choice to do 2-fold cross-validation rests on the assumption that while individual pixels are not independent, it may be more realistic to believe that the two images are independent. We hope that this independence will give more conservative training error measurements, and help avoid overfitting. In the end, the success of our procedures will be evaluated by predicting on the held out third image.  
 
 \section{Results}
 
 \subsection{Predictive accuracy}
-We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines, and compare the benefits, if any, of using the smoothed features. Our main results are summarized in table~\ref{tab:acc_results}.
+We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines, and compare the benefits, if any, of using the smoothed features instead of the original features. Predictive accuracy is measured based on the success of predicting the expert labeled pixels; we ignore the unlabeled pixels. Our main results are summarized in table~\ref{tab:acc_results}. 
+
 \subsubsection*{Logistic regression}
 
 <<logistic_reg, cache = TRUE>>=
-tmp <- 0
 
-# fit logistic regression to first image
+# fit logistic regression to first two images
 image12 <- rbind(image1, image2)
 logistic_fit <- get_logistic_fit(image12, smooth_features = FALSE)
 logistic_fit_smo <- get_logistic_fit(image12, smooth_features = TRUE)
@@ -162,7 +170,7 @@ image3_pred <- get_logistic_prediction(logistic_fit, image3.plots)
 image3_pred_smo <- get_logistic_prediction(logistic_fit_smo, image3.plots)
 @
 
-As a baseline, we use a simple logistic regression on the original eight features to predict the expert labels. We fit the model using the first and second images, and our predictive accuracy on the third image with the original features is \Sexpr{image3_pred$accuracy}. Using the smoothed features, we get an accuracy of \Sexpr{image3_pred_smo$accuracy}. Therefore, it appears that smoothing the features did not have a significant effect when doing logistic regression.
+As a baseline, we fit a simple logistic regression. We train the model using the first and second images, and examine the predictive accuracy on the third image. Using the original features, our predictive accuracy is \Sexpr{image3_pred$accuracy}. Using the smoothed features, we get an accuracy of \Sexpr{image3_pred_smo$accuracy}. Therefore, it appears that smoothing the features did not have a significant effect when doing logistic regression.  
 
 \subsubsection*{LASSO}
 
@@ -174,7 +182,7 @@ image3_lasso_pred <- get_lasso_prediction(lasso_fit$fit, image3.plots)
 image3_lasso_smo_pred <- get_lasso_prediction(lasso_fit_smo$fit, image3.plots)
 @
 
-We now examine the accuracy of the LASSO, trained on the first two images with cross validation as described in ~\ref{CV_descr}. The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred$accuracy} when using the original features, and \Sexpr{image3_lasso_smo_pred$accuracy} when using the smoothed features. Like in the logistic regression, smoothing the features did not appear to make a big difference here.
+We now examine the success of the LASSO, trained on the first two images with cross validation as described in ~\ref{CV_descr}. The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred$accuracy} when using the original features, and \Sexpr{image3_lasso_smo_pred$accuracy} when using the smoothed features. Like in the logistic regression, smoothing the features did not appear to make a big difference here. 
 
 \subsubsection*{Random Forest}
 
@@ -182,23 +190,33 @@ We now examine the accuracy of the LASSO, trained on the first two images with c
 # image1_neighbor <- add_neighbor_info(image1)
 # image2_neighbor <- add_neighbor_info(image2)
 # image3_neighbor <- add_neighbor_info(image3)
-tmp <- 0
 
-image12 <- rbind(image1, image2)
+# train on images 1 and 2
 rf_fit_orig <- get_rf_fit(image12, smooth_features = FALSE)
 rf_fit_orig_smo <- get_rf_fit(image12, smooth_features = TRUE)
+@
 
-image2_rf_pred <- get_rf_prediction(rf_fit_orig, image2.plots)
-image2_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image2.plots)
+<<rf_pred, cache = TRUE, results = 'hide'>>=
+tmp <- 0
 image3_rf_pred <- get_rf_prediction(rf_fit_orig, image3.plots)
 image3_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image3.plots)
 @
 
-Without feature smoothing, the predictive accuracy on image 3 is \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on  image 3 was \Sexpr{image3_rf_smo_pred$accuracy}. In contrast, The training accuracy on image 2 without smoothing is \Sexpr{image2_rf_pred$accuracy}, and the training accuracy with smoothing is \Sexpr{image2_rf_smo_pred$accuracy}. The huge gap suggests that there is overfitting.
+<<rf_plot>>=
+print(image3_rf_pred$accuracy)
+length(image3_rf_pred$pred_class)
 
-A noticable phenomenon during the training of random forest models is that if we do not perform feature normalizations, then the prediction accuracy on image 3 will change dramatically. It could be due to the fact that we do the scaling on 3 images independently, i.e., we use their own mean and standard deviation to normalize each feature. However, since the assumption that these 3 images have identical distribution could be wrong, after normalizing each feature will be biased and the tree algorithm would not adapt to such changes.
+print(image3_rf_smo_pred$accuracy)
+length(image3_rf_smo_pred$pred_class)
 
-Another group of experiments were conducted on a new dataset where each pixel would have access to the features of its neighboring pixels, i.e., the pixels to the up, down, left and right directions. If we train the model on image 1, then the top 3 of the most important features are \texttt{NDAI, NDAI\_u} and \texttt{NDAI\_l}, which suggests that the neighboring pixels provide more information than its local features.
+#plotr(image2.plots, fill = image2_rf_pred$pred_class)
+@
+
+After training the random forest on the first two images with the original features, the predictive accuracy on image 3 was \Sexpr{image3_rf_pred$accuracy}. With feature smoothing, the predictive accuracy on image 3 was \Sexpr{image3_rf_smo_pred$accuracy}.
+
+%Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \texttt{AF\_smoothed} and \texttt{SD\_smoothed}.
+
+%Another group of experiments were conducted on a new dataset where each pixel would have access to the features of its neighboring pixels, i.e., the pixels to the up, down, left and right directions. If we train the model on image 1, then the top 3 of the most important features are \texttt{NDAI, NDAI\_u} and \texttt{NDAI\_l}, which suggests that the neighboring pixels provide more information than its local features.
 
 \subsubsection*{Support Vector Machine}
 
@@ -213,28 +231,22 @@ svm_fit_smo <- get_svm_fit_2fold_cv(image1, image2, smooth_features = TRUE)
 @
 
 <<svm_pred, cache = TRUE>>=
-tmp <- 0
-# why the fuck does 'predict' take so long too goddamnit
+# why the fuck does 'predict' take so long too 
 image3_svm_pred <- get_svm_prediction(svm_fit$fit, image3.plots)
 image3_svm_smo_pred <- get_svm_prediction(svm_fit_smo$fit, image3.plots)
 @
 
-<<>>=
-print(image3_svm_pred$accuracy)
-print(image3_svm_smo_pred$accuracy)
-@
+Finally, we examine prediction using SVM. As described in section \ref{CV_descr}, the first two images were used for training, and 2-fold cross-validation was used to set the cost of contraint violation. 
 
-Finally, we examine prediction using SVM. As described in section \ref{CV_descr}, the first two images were used as a training, set and 2-fold cross-validation was used to set the cost of contraint violation.
-
-Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be important by the LASSO (see section~\ref{feature_selection}). Using these tree features, predictive
+Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be important by the LASSO (see section~\ref{feature_selection}). Using these tree features, the predictive accuacy on the held out third image was \Sexpr{image3_svm_pred$accuracy} with the original features, and \Sexpr{image3_svm_smo_pred$accuracy} with the smoothed features. 
 
 \begin{table}[h]
  \centering
  \begin{tabular}{lllll}
  & logistic & LASSO & RF & SVM \\
- smoothed features & \Sexpr{image3_pred$accuracy} &
- \Sexpr{image3_lasso_pred$accuracy}& 100\% !! & 100\% !!\\
- original features & \Sexpr{image3_pred_smo$accuracy} &  \Sexpr{image3_lasso_pred$accuracy} & 99\% !! & 99\% !!
+ smoothed features & \Sexpr{image3_pred_smo$accuracy} &
+ \Sexpr{image3_lasso_smo_pred$accuracy}& \Sexpr{image3_rf_smo_pred$accuracy} & \Sexpr{image3_svm_smo_pred$accuracy}\\
+ original features & \Sexpr{image3_pred$accuracy} &  \Sexpr{image3_lasso_pred$accuracy} & \Sexpr{image3_rf_pred$accuracy}& \Sexpr{image3_svm_pred$accuracy}
  \end{tabular}
 \caption{accuracy on test set}
 \label{tab:acc_results}
@@ -242,37 +254,80 @@ Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be im
 
 \begin{figure}[h]
 \centering
-\begin{subfigure}[t]{0.25\textwidth}
-<<expert_image3, cache = TRUE>>=
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = TRUE>>=
 plotr(image3.plots, image3.plots$label, "none") +
   remove_y
 @
 \subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.25\textwidth}
-<<lasso_image3, cache = TRUE>>=
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = TRUE>>=
 plotr(image3.plots, image3_lasso_pred$pred_class, "none") +
   remove_y
 @
 \subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.25\textwidth}
-<<>>=
-plotr(image3.plots, image3_lasso_pred$pred_class, "none") +
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = TRUE>>=
+plotr(image3.plots, image3_rf_pred$pred_class, "none") +
   remove_y
 @
 \subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.25\textwidth}
-<<>>=
-knitr::include_graphics('./panda.jpg')
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = TRUE>>=
+plotr(image3.plots, image3_svm_pred$pred_class, "none") +
+  remove_y
 @
-\subcaption{RF prediction on image 3}
 \end{subfigure}
-\caption{Expertly labeled figures}
+\caption{Labels on image 3. (a) the expert label; (b) lasso predicted labels; (c) random forest predicted labels; (d) SVM predicted labels. Here, models were fit with the original eight features. }\label{fig:map_orig_features}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = TRUE>>=
+plotr(image3.plots, image3.plots$label, "none") +
+  remove_y
+@
+\subcaption{}
+\end{subfigure}
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = TRUE>>=
+plotr(image3.plots, image3_lasso_smo_pred$pred_class, "none") +
+  remove_y
+@
+\subcaption{}
+\end{subfigure}
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = FALSE>>=
+plotr(image3.plots, image3_rf_smo_pred$pred_class, "none") +
+  remove_y
+@
+\subcaption{}
+\end{subfigure}
+\begin{subfigure}[t]{0.245\textwidth}
+<<cache = TRUE>>=
+plotr(image3.plots, image3_svm_smo_pred$pred_class, "none") +
+  remove_y
+@
+\end{subfigure}
+\caption{Labels on image 3. (a) the expert label; (b) lasso predicted labels; (c) random forest predicted labels; (d) SVM predicted labels. Here, models were fit with the eight features smoothed. }\label{fig:map_smo_features}
 \end{figure}
 
 \subsection{Feature selection}\label{feature_selection}
+<<axis_sizes, cache = TRUE>>=
+title_size <- 25
+axis_title_size <- 20
+axis_element_size <- 20
+
+set_axis_size <- theme(axis.text=element_text(size=axis_element_size), 
+                       axis.title = element_text(size=axis_title_size), 
+                       plot.title = element_text(size=title_size))
+
+@
+
 <<lasso_feat_selection, cache = TRUE, results = 'hide'>>=
 image12 <- rbind(image1, image2)
 
@@ -284,7 +339,7 @@ fit_lasso12_path <- glmnet(as.matrix(X), y, family = "binomial")
 
 lasso_fit_all_feat <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = NULL)
 @
-The $L1$ penalty in the LASSO not only helps prevent overfitting, but the sparsity pattern also gives insight into which features are truly important for predicting cloud coverage. With this goal in mind, we fit the LASSO on the first two images with 16 features: the original 8 plus their smoothed versions, and see which regression coefficients are nonzero. The coefficients as a function of the penalty parameter is shown in figure~\ref{fig:lasso_penalty}. We choose the penalty parameter using 2-fold cross-validation with the two images as folds (see section~\ref{lasso_descr}) to choose an optimal lambda. At this optimal lambda, we see that only four features are active: smoothed NDAI, smoothed CORR, smoothed DF, and non-smoothed CORR, with the non-smoothed CORR coefficient being barely non-zero. Hence, this suggests that NDAI, CORR, and DF are the three most important features, and moreover, looking at the smoothed versions may be sufficient.
+The $L1$ penalty in the LASSO not only helps prevent overfitting, but the sparsity pattern also gives insight into which features are truly important for predicting cloud coverage. With this goal in mind, we fit the LASSO on the first two images with 16 features: the original 8 plus their smoothed versions, and see which regression coefficients are nonzero. The coefficients as a function of the penalty parameter is shown in figure~\ref{fig:lasso_penalty}. We choose the penalty parameter using 2-fold cross-validation with the two images as folds (see section~\ref{lasso_descr}). At this optimal lambda, we see that only four features are active: smoothed NDAI, smoothed CORR, smoothed DF, and non-smoothed CORR, with the non-smoothed CORR coefficient being barely non-zero. Hence, this suggests that NDAI, CORR, and DF are the three most important features, and moreover, looking at the smoothed versions may be sufficient. 
 
 \begin{figure}[h]
 \centering
@@ -296,40 +351,61 @@ feature_names <- rownames(coeff)
 coeff_vec <- as.vector(coeff)
 lambdas <- fit_lasso12_path$lambda
 
-coeff_df <- data.frame(coefficient = coeff_vec,
-                       name = rep(feature_names, 100),
+coeff_df <- data.frame(coefficient = coeff_vec, 
+                       name = rep(feature_names, 100), 
                        log_lambda = log(as.vector(t(replicate(16, lambdas)))))
 
-ggplot(coeff_df) + geom_line(aes(x = log_lambda, y = coefficient, color = name)) +
-  geom_vline(xintercept=log(lasso_fit_all_feat$cv_results$lambda_best),
-             linetype="dotted") +
-  annotate('text', x = -7.8, y = 4, label = "NDAI_smoothed", size = 4) +
-  annotate('text', x = -5.2, y = 1.75, label = "CORR_smoothed", size = 4) +
-  annotate('text', x = -4.8, y = 0.3, label = "DF_smoothed",  size = 4) +
-  theme(legend.position="none")
+ggplot(coeff_df) + geom_line(aes(x = log_lambda, y = coefficient, color = name)) + 
+  geom_vline(xintercept=log(lasso_fit_all_feat$cv_results$lambda_best), 
+             linetype="dotted") + 
+  annotate('text', x = -7.8, y = 4, label = "NDAI_smoothed", size = 4) + 
+  annotate('text', x = -5.2, y = 1.75, label = "CORR_smoothed", size = 4) + 
+  annotate('text', x = -4.8, y = 0.3, label = "DF_smoothed",  size = 4) + 
+  theme(legend.position="none") + set_axis_size
 @
 \end{subfigure}
 \caption{The LASSO regression path; that is, we plot the values of the regression coefficients of the 16 features (eight original, eight smoothed) as a function of the penalty parameter $\lambda$. The vertical dotted line is the optimal $\lambda$ chosen by cross-validation. At this point, we see that there are three clearly non-zero coefficients: smoothed NDAI, smoothed CORR, and smoothed DF. }
 \label{fig:lasso_penalty}
 \end{figure}
 
-Random forest models also reports feature importance by giving the Gini coefficient. In our original model which is trained on image 1 and 2 without smoothing, the top 3 most important features are \texttt{NDAI, AF} and \texttt{BF}. If we add the smoothing features, then 3 of the most important features would become \texttt{NDAI\_smoothed}, \texttt{AF\_smoothed} and \texttt{SD\_smoothed}. The figure \ref{fig:rf_importance} shows the Gini coefficient of the model in decreasing order.
+We can also get feature importances from the random forest by looking at the mean decrease in Gini coefficient when splitting upon that feature at a node. Hence, we fit a random forest on the first two images using all 16 features, the eight original plus the eight smoothed. From figure~\ref{fig:rf_varImp}, we see taht NDAI and smoothed NDAI are the two most important features. This agrees will with figure ({\color{red} reference figure from EDA that shows NDAI splits the classes well}), and the result from the paper ({\color{red} re-read paper, see what they said about NDAI}). 
 
 \begin{figure}[h]
 \centering
-<<rf_feature_importance>>=
-df <- data.frame(rf_fit_orig$variable.importance)
-names(df) <- 'Variable_Importance'
-df$Variable <- rownames(df)
-ggplot(data=df, aes(x = reorder(Variable, -Variable_Importance), y = Variable_Importance)) +
-  geom_bar(position = 'identity', stat = 'identity') +
-  labs(x="Variable",y="Variable Importance")
+\begin{subfigure}{0.4\textwidth}
+<<rf_feature_importance, cache = TRUE>>=
+image12 <- rbind(image1, image2)
+
+labeled_indx <- which(image12$label != 0)
+X <- image12[labeled_indx, -c(1,2,3)] # use both smoothed and unsmoothed features
+y <- droplevels(image12$label[labeled_indx])
+
+data <- cbind(y, X)
+fit_rf_16features <- ranger(y ~ ., 
+                    data = data, 
+                   num.trees = 10, 
+                   probability = TRUE, 
+                   importance = 'impurity')
 @
-\caption{Variable importance of the Random Forest model by GINI coefficient}
-\label{fig:rf_importance}
+
+<<rf_feature_importance_plot, cache = TRUE, fig.height=7, fig.width=10>>=
+var_imp <- sort(fit_rf_16features$variable.importance) / 
+  sum(fit_rf_16features$variable.importance)
+features <- names(var_imp)
+names(var_imp) <- c()
+
+var_imp_df <- data.frame(Importance = var_imp, Features = features)
+ggplot(var_imp_df, aes(x = reorder(Features, -Importance), y = Importance)) + 
+  geom_bar(stat = "identity", fill = 'light blue') + 
+  theme(axis.text.x=element_text(angle=90,hjust=1)) + 
+  xlab('Features') + set_axis_size
+
+@
+\end{subfigure}
+\caption{Random forest feature importances as measured by mean decrease in GINI impurity. }
+\label{fig:rf_varImp}
 \end{figure}
 
-Hence SVM only used these blah blah features.
 
 \section{Discussion}
 - final model chosen: Show some diagnostic plots or information related to convergence or

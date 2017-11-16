@@ -66,8 +66,13 @@ get_rf_prediction <- function(model, image){
                                       dat = X, 
                                       type = 'response')
   
-  image_prediction_rf <- get_labels_from_prob(image_prediction_prob_rf$predictions[, 2])
+  # image_prediction_rf <- 
+  # get_labels_from_prob(image_prediction_prob_rf$predictions[, 2])
+  image_prediction_rf <- 1.0 * (image_prediction_prob_rf$predictions[, 2] > 0.5) + 
+    (-1.0) * (image_prediction_prob_rf$predictions[, 2] < 0.5)
+  
   accuracy <- mean(y[labeled_indx] == image_prediction_rf[labeled_indx])
+  
   return(list(accuracy = accuracy,
               pred_class = image_prediction_rf))
 }
