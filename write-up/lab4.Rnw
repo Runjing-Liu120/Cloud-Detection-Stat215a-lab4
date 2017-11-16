@@ -1,6 +1,8 @@
 \documentclass{article}
 
 \usepackage{geometry}
+\usepackage[backend=bibtex]{biblatex}
+\bibliography{references}
 \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
@@ -111,7 +113,7 @@ plotr(image3.plots, image3.plots$label, "right") +
 \subsection{Feature smoothing}\label{feature_smoothing}
 In our analysis, we will consider not only the eight features, but also smoothed versions of them. We do this because in image data, neighboring pixels are generally not independent; in particular, there is usually be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels. 
 
-Hence, inspired by how the engineered features NDAI, CORR, and SD takes radiances from a surrouding $8\times 8$ grid of pixels, we also take in information from neighboring pixels. Instead of considering the original features, we consider features that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
+Hence, inspired by how the engineered features NDAI, CORR, and SD take radiances from a surrouding $8\times 8$ grid of pixels, we also take in information from neighboring pixels. Instead of considering the original features, we consider features that are smoothed versions of the original: that is, for each pixel and each original feature, we add a feature that is the average of that original feature over its 64 nearest neighbors. 
 
 We also hope that this smoothing may give better test accuracy by ameliorating the effect of outliers that may exist in the dataset. 
 
@@ -124,7 +126,7 @@ We describe here the four algorithms used: logistic regression, logistic LASSO, 
 \subsection{Logistic regression and LASSO}\label{lasso_descr}
 As a first attempt to predict the expert labels, we fit a logistic regression using the first two images as our training set. 
 
-However, to guard against overfitting, we then tried the logistic LASSO; that is, we run a logistic regression with an $L1$ penalty. The strength of this penalty was chosen by 2-fold cross validation using the first two images, as described in section~\ref{CV_descr} below. By doing LASSO, we hope that the regularization will give us better test accuracy by not overfitting to the training set, and the sparsity has the added benefit of suggesting which features are necessary for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
+However, to guard against overfitting, we then tried the logistic LASSO; that is, we run a logistic regression with an $L1$ penalty. The strength of this penalty was chosen by 2-fold cross validation using the first two images, as described in section~\ref{CV_descr} below. By doing LASSO, we hope that the regularization will give us better test accuracy by not overfitting to the training set, and the sparsity has the added benefit of suggesting which features are necessary for the prediction. For example, NDAI was noted in the paper  ({\color{red} cite} \cite{shi2008daytime}) and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
 
 
 \subsection{RF}\label{rf_descr}
@@ -427,5 +429,5 @@ use quantitative and visual methods of analysis. Do you notice problems in parti
 specific ranges of feature values?
 6. How well do you think your model will work on future data without expert labels?
 
-
+\printbibliography
 \end{document}
