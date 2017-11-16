@@ -15,7 +15,8 @@
 \usepackage{color}
 \usepackage{hyperref}
 \usepackage{multirow}
-
+\usepackage{float}
+\usepackage{wrapfig}
 
 
 \begin{document}
@@ -37,6 +38,7 @@ library(knitr)
 library(ggplot2)
 library(dplyr)
 library(reshape2)
+library(GGally)
 
 source('./R/data_processing_utils.R')
 source('./R/lasso_utils.R')
@@ -48,10 +50,16 @@ blank_theme <- theme_minimal(base_size = 30) +
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.border = element_blank())
+
+blank_theme_small <- theme_minimal(base_size = 20) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank())
+        
 remove_y <-   theme(axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
-
 @
 
 <<load_data, cache = TRUE>>=
@@ -70,13 +78,24 @@ image1 <- prep_image(image1.plots)
 image2 <- prep_image(image2.plots)
 image3 <- prep_image(image3.plots)
 
+ones <- image1.plots %>%
+  filter(label == 1)
+
 @
 
 \section{Introduction}
-\subsection{Source of data (RN)}
-- definitions/ data source
-- expert labels plot
-- models used to predict labels
+In this report, we investigate the application of various statistical and machine learning models for a task in image recognition. Specifically, we apply logistic regression, LASSO, random forest, and support vector machines in distinguishing between pixels representing either cloud or ice cover from satellite imagery. We build on the work presented in {\color{red} cite, name the paper}, which utilizes thresholding on three features of the imagery through an enhanced linear correlation matching (ELCM) algorithm. The images used to train and test our models are from the National Aeronautics and Space Administration's (NASA) Multiangle Imaging SpectroRadiometer (MISR). In light of the climate change-driven melting of the ice caps in the polar regions, it becomes increasingly important and difficult to monitor ice cover remotely, provided feedback effects increasing the frequency of cloud cover.
+We begin our report with an exploration and analysis of three MISR images and their features.
+
+\subsection{Image Properties}
+
+The MISR images 
+Each image dataframe includes the following recordings for each pixel: its x,y placement within the image, an expert labeling of either 1, 0, -1 (cloud, unclear, and no cloud, respectively), red-band radiance measurments from five different angles, the correlation of MISR images of the same scene from different MISR viewing directions (CORR), the standard deviation of the MISR nadir camera pixel values accross a scene (SD), and the normalized difference angular index (NDAI). We consider the five different radiance measurements, CORR, SD, and NDAI as features for our model. 
+
+
+multi-angle and recorded in the red-band
+
+
 
 \begin{figure}[h]
 \centering
@@ -105,10 +124,139 @@ plotr(image3.plots, image3.plots$label, "right") +
 \end{figure}
 
 
-\subsection{EDA (RN)}
-- Differences between angle radiances
-- cloud/nocloud angles
+
+\subsubsection{Angles}
+
+
+
+
+
+\begin{wrapfigure}{R}{0.6\textwidth}
+  \begin{center}
+<<image_plot100, cache = TRUE, fig.align='center', out.width='0.6\\textwidth'>>=
+suppressMessages(require(ggplot2))
+ggpairs(ones[, 7:11], lower=list(continuous = wrap("smooth", alpha = 0.2, fill = NA)),
+        diag=list(continuous="barDiag"),
+        upper = list(corSize=12)) + blank_theme_small
+@
+  \end{center}
+\end{wrapfigure}
+
+
+
+- Differences between angle radiance
+
+In this section we explore the relationship of the different radiance measures besed on the different angles: DF, CF, BF, AF, and AN. The most forward-viewing oblique camera is DF and the most aft-viewing oblique camera is AN, with the progression between the two being representing by the degression of the alphabetical labeling. The radiance value distribution and correlations between the different angles is summarized in the figure to the right. Here we see that the similarity between the different angle measures is inconsistent. The inconsitency can be attributed to the change in the positioning of the clouds as each angle measure is taken. This issue is addressed by {\color{red} cite, name the paper}. While the ground pixels recordings remain rather consitent as the satellite travels over the region, the clouds both naturally shift and are obscured by the refraction angles.
+
+
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot5, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = DF, group = label, fill = label), 
+               alpha = 0.5) +
+  blank_theme +
+  theme(legend.position="none")
+@
+\subcaption{expert labeled image1}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot6, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = CF, group = label, fill = label), 
+               alpha = 0.5) +
+  blank_theme +
+  theme(legend.position="none",
+        axis.title.y=element_blank())
+@
+\subcaption{expert labeled image2}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot7, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = BF, group = label, fill = label), 
+               alpha = 0.5)  +
+  blank_theme +
+  guides(color=guide_legend("Label",
+    override.aes = list(size=10))) +
+  theme(axis.title.y=element_blank())
+@
+\subcaption{expert labeled image1}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot8, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = AF, group = label, fill = label), 
+               alpha = 0.5)  +
+  blank_theme +
+  guides(color=guide_legend("Label",
+    override.aes = list(size=10))) +
+  theme(legend.position="none")
+@
+\subcaption{expert labeled image1}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot9, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = AN, group = label, fill = label), 
+               alpha = 0.5)  +
+  blank_theme +
+  guides(color=guide_legend("Label",
+    override.aes = list(size=10))) +
+  theme(axis.title.y=element_blank())
+@
+\subcaption{expert labeled image1}
+\end{subfigure}
+\caption{Expertly labeled figures}
+\label{fig:cloud/nocloud}
+\end{figure}
+
+\subsubsection{Additional Features}
+
 - cloud/nocloud 
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot10, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = NDAI, group = label, fill = label), 
+               alpha = 0.5) +
+  blank_theme +
+  theme(legend.position="none")
+@
+\subcaption{expert labeled image1}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot11, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = CORR, group = label, fill = label), 
+               alpha = 0.5) +
+  blank_theme +
+  theme(legend.position="none",
+        axis.title.y=element_blank())
+@
+\subcaption{expert labeled image2}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot12, cache = TRUE>>=
+ggplot(image1.plots) + 
+  geom_density(aes(x = SD, group = label, fill = label), 
+               alpha = 0.5)  +
+  blank_theme +
+  guides(color=guide_legend("Label",
+    override.aes = list(size=10))) +
+  theme(axis.title.y=element_blank())
+@
+\subcaption{expert labeled image1}
+\end{subfigure}
+\caption{Expertly labeled figures}
+\label{fig:cloud/nocloud 
+}
+\end{figure}
+
 
 \subsection{Feature smoothing}\label{feature_smoothing}
 In our analysis, we will consider not only the eight features, but also smoothed versions of them. We do this because in image data, neighboring pixels are generally not independent; in particular, there is usually be some ``continuity" in the structure of an image. Looking at figure~\ref{fig:expert_labels}, we see that a pixel labeled as a cloud is usually surrounded by other cloudy pixels; similarly, a pixel labeled as ice is usually surrounded by other icy pixels. 
