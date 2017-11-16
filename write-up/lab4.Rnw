@@ -272,15 +272,15 @@ knitr::include_graphics('./panda.jpg')
  & & logistic regression & LASSO & RF & SVM \\
     \hline
     \multirow{2}{*}{Image2}& smoothed features & 
-    \Sexpr{image2_pred_smo$accuracy} & NA & 100 & 100\\
+    \Sexpr{image2_pred_smo$accuracy} & NA & \Sexpr{image2_rf_smo_pred$accuracy} & 100\\
     & original features & 
-    \Sexpr{image2_pred$accuracy} & NA & 100 & 100\\
+    \Sexpr{image2_pred$accuracy} & NA & \Sexpr{image2_rf_pred$accuracy} & 100\\
     \hline
     \hline
     \multirow{2}{*}{Image3}& smoothed features & 
-    \Sexpr{image3_pred_smo$accuracy} & \Sexpr{image3_lasso_smo_pred$accuracy} & 100 & 100\\
+    \Sexpr{image3_pred_smo$accuracy} & \Sexpr{image3_lasso_smo_pred$accuracy} & \Sexpr{image3_rf_smo_pred$accuracy} & 100\\
     &original features & 
-    \Sexpr{image3_pred$accuracy} & \Sexpr{image3_lasso_pred$accuracy} & 100 & 100\\
+    \Sexpr{image3_pred$accuracy} & \Sexpr{image3_lasso_pred$accuracy} & \Sexpr{image3_rf_pred$accuracy} & 100\\
     \hline
 \end{tabular}
 \caption{accuracy on test set}
