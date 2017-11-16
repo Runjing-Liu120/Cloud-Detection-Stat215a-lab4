@@ -137,7 +137,7 @@ The model was first trained on image 1, and then the model was tested on image2 
 \subsection{SVM (RN) }
 Finally, we also used support vector machines for classification. However, we only used three features: NDAI, CORR, and DF, since these were features found to be important by the LASSO (see section~\ref{feature_selection}). We also fit the SVM with the smoothed version of these three features. The cost for constraint violation was chosen with 2-fold cross-validation as described in section~\ref{CV_descr}. 
 
-\subsection{Model selection and validation}~\section{CV_descr}
+\subsection{Model selection and validation}\label{CV_descr}
 We used the first two images as our training set, and hold out the third image as a test set. Hence, all accuracy measures are given by predictions on this third test set. 
 
 When parameters needed to be tuned, we used 2-fold cross-validation: we fit on the first image and validate on the second image; we then flip the procedure and fit to the second image and validate on the first. The predictive accuracy of these two folds are averaged, and we choose the parameter to maximize this averaged predictive accuracy. 
@@ -229,19 +229,33 @@ svm_fit <- get_svm_fit_2fold_cv(image1, image2, smooth_features = FALSE)
 svm_fit_smo <- get_svm_fit_2fold_cv(image1, image2, smooth_features = TRUE)
 @
 
+<<svm_pred, cache = TRUE>>=
+# why the fuck does 'predict' take so long too goddamnit
+tmp <- 0
+image3_svm_pred <- get_svm_prediction(svm_fit$fit, image3)
+image3_svm_smo_pred <- get_svm_prediction(svm_fit_smo$fit, image3)
+@
+
+<<>>=
+print(image3_svm_pred$accuracy)
+print(image3_svm_smo_pred$accuracy)
+
+@
 
 
 \begin{figure}[h]
 \centering
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image3.plots, image3.plots$label, "right") +
+  remove_y
 @
 \subcaption{expert labeled image3}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
 <<>>=
-knitr::include_graphics('./panda.jpg')
+plotr(image3.plots, image3.plots$label, "right") +
+  remove_y
 @
 \subcaption{lasso prediction on image 3}
 \end{subfigure}\\

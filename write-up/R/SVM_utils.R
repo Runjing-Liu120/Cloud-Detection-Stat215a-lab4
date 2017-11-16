@@ -91,20 +91,22 @@ get_svm_fit_2fold_cv <- function(image1, image2, smooth_features = FALSE,
               cv_results = cv_results))
 }
 
-get_lasso_prediction <- function(fit, image3){
-  # takes in a lasso fit, from the 'get_lasso_fit_2fold_cv' function above
+get_svm_prediction <- function(fit, image3, smoothsv = TRUE){
+  # takes in a svm fit, from the 'get_lasso_fit_2fold_cv' function above
   # and gets predictions on the test image (image3 here)
   # returns predictive probabilities, predicted classes, and accuracy
   
   # check if the fit was on smoothed or nonsmoothed features
-  smooth_features <- 'NDAI_smoothed' %in% rownames(fit$beta)
+  smooth_features <- 'NDAI_smoothed' %in% 
+    names(fit$x.scale$`scaled:center`)
+
   # else the feature would be called 'NDAI' without the '_smoothed'
   
   # whether to take smoothed features or not
   if(smooth_features){
-    feature_names <- colnames(image3)[grep("_smoothed", colnames(image3))]
+    feature_names <- c('NDAI_smoothed','CORR_smoothed','DF_smoothed')
   }else{
-    feature_names <- c('NDAI','SD','CORR','DF','CF','BF','AF','AN')
+    feature_names <- c('NDAI','CORR','DF')
   }
   
   labeled_indx <- which(image3$label != 0)
@@ -114,18 +116,12 @@ get_lasso_prediction <- function(fit, image3){
   
   X <- labeled_image[, feature_names]
   
-  y_pred_prob <- predict(fit, 
-                         newx = as.matrix(X),
-                         type = 'response') # returns a probability of being +1 (vs. -1)
-  
-  # get the class label from probability
-  y_pred_class <- 1.0 * (y_pred_prob > 0.5) + (-1.0) * (y_pred_prob < 0.5)
-  
+  y_pred_class <- predict(fit, newdata = X) 
+
   # get predictive accuracy
   pred_accuracy <- mean(y_pred_class == y)
   
-  return(list(pred_prob = y_pred_prob, 
-              pred_class = y_pred_class, 
+  return(list(pred_class = y_pred_class, 
               accuracy = pred_accuracy))
 }
 
