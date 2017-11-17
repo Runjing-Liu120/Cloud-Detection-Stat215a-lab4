@@ -304,7 +304,7 @@ We chose to do 2-fold cross-validation since in image data, each pixel is likely
 \section{Results}
 
 \subsection{Predictive accuracy}
-We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines, and compare the benefits, if any, of using the smoothed features instead of the original features. Since we are only doing binary classification, accuracy is measured by the success of predicting the expert labeled pixels; we ignore the unlabeled pixels. Our predictive accuracies are summarized in table~\ref{tab:acc_results}, and figures~\ref{fig:map_orig_features} and \ref{fig:map_smo_features} visually compares the expert labels with the predicted labels. 
+We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines, and compare the benefits, if any, of using the smoothed features instead of the original features. Since we are only doing binary classification, accuracy is measured by the success of predicting the expert labeled pixels; we ignore the unlabeled pixels. Our predictive accuracies are summarized in table~\ref{tab:acc_results}, and figures~\ref{fig:map_orig_features} and \ref{fig:map_smo_features} visually compares the expert labels with the predicted labels. As a comparison, the training accuracy on image 1 is reported in the table \ref{tab:training_accu_results}
 
 \subsubsection*{Logistic regression}
 
@@ -388,7 +388,36 @@ image3_svm_smo_pred <- get_svm_prediction(svm_fit_smo$fit, image3.plots)
 
 Finally, we examine prediction using an SVM. As described in section \ref{CV_descr}, the first two images were used for training, and 2-fold cross-validation was used to set the cost of contraint violation. 
 
-Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be important by the LASSO (see section~\ref{feature_selection}). Using these tree features, the predictive accuacy on the held out third image was \Sexpr{image3_svm_pred$accuracy}; after smoothing these three features, the predictive accuracy was \Sexpr{image3_svm_smo_pred$accuracy}.  
+Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be important by the LASSO (see section~\ref{feature_selection}). Using these tree features, the predictive accuacy on the held out third image was \Sexpr{image3_svm_pred$accuracy}; after smoothing these three features, the predictive accuracy was \Sexpr{image3_svm_smo_pred$accuracy}.
+
+<<testing_accuracy, cache = TRUE>>=
+
+# predict on the 1st image
+# SVM
+image1_svm_pred <- get_svm_prediction(svm_fit$fit, image1.plots)
+image1_svm_smo_pred <- get_svm_prediction(svm_fit_smo$fit, image1.plots)
+# RF
+image1_rf_pred <- get_rf_prediction(rf_fit_orig, image1.plots)
+image1_rf_smo_pred <- get_rf_prediction(rf_fit_orig_smo, image1.plots)
+# LASSO
+image1_lasso_pred <- get_lasso_prediction(lasso_fit$fit, image1.plots)
+image1_lasso_smo_pred <- get_lasso_prediction(lasso_fit_smo$fit, image1.plots)
+# Logistic
+image1_pred <- get_logistic_prediction(logistic_fit, image1.plots)
+image1_pred_smo <- get_logistic_prediction(logistic_fit_smo, image1.plots)
+@
+
+\begin{table}[tb]
+ \centering
+ \begin{tabular}{l|llll}
+ & logistic & LASSO & RF & SVM \\\hline
+ smoothed features & \Sexpr{image1_pred_smo$accuracy} &
+ \Sexpr{image1_lasso_smo_pred$accuracy}& \Sexpr{image1_rf_smo_pred$accuracy} & \Sexpr{image1_svm_smo_pred$accuracy}\\
+ original features & \Sexpr{image1_pred$accuracy} &  \Sexpr{image1_lasso_pred$accuracy} & \Sexpr{image1_rf_pred$accuracy}& \Sexpr{image1_svm_pred$accuracy}
+ \end{tabular}
+\caption{Accuracy on training set}
+\label{tab:training_accu_results}
+\end{table}
 
 \begin{table}[tb]
  \centering
@@ -398,7 +427,7 @@ Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be im
  \Sexpr{image3_lasso_smo_pred$accuracy}& \Sexpr{image3_rf_smo_pred$accuracy} & \Sexpr{image3_svm_smo_pred$accuracy}\\
  original features & \Sexpr{image3_pred$accuracy} &  \Sexpr{image3_lasso_pred$accuracy} & \Sexpr{image3_rf_pred$accuracy}& \Sexpr{image3_svm_pred$accuracy}
  \end{tabular}
-\caption{accuracy on test set}
+\caption{Accuracy on test set}
 \label{tab:acc_results}
 \end{table}
 
