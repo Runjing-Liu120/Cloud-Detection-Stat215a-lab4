@@ -59,6 +59,13 @@ blank_theme_small <- theme_minimal(base_size = 20) +
         panel.border = element_blank()) + 
   theme(axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'))
 
+blank_theme_large <- theme_minimal(base_size = 45) +
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank()) + 
+  theme(axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'))
+
 remove_y <-   theme(axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
@@ -75,6 +82,7 @@ set_axis_size <- theme(axis.text=element_text(size=axis_element_size),
                        plot.title = element_text(size=title_size))
 
 @
+
 
 <<load_data, cache = TRUE>>=
 # first two columns are coordinates
@@ -95,6 +103,12 @@ image3 <- prep_image(image3.plots)
 ones <- image1.plots %>%
   filter(label == 1)
 
+negative_ones <- image1.plots %>%
+  filter(label == -1)
+
+set.seed(19)
+s <- sample(115229, 10000)
+
 @
 
 \section{Introduction}
@@ -107,7 +121,7 @@ In this report, we investigate the application of various statistical and machin
 
 
 
-Each image dataframe, for each pixel, includes the following recordings: x,y placement within the image, an expert labeling of either 1, 0, or -1 (cloud, unclear, and no cloud, respectively), red-band radiance measurements from five different angles, the correlation of MISR images of the same scene from different MISR viewing directions (CORR), the standard deviation of the MISR nadir camera pixel values accross a scene (SD), and the normalized difference angular index (NDAI). We consider the five different radiance measurements, CORR, SD, and NDAI as features for our model in the prediction of whether a cloud is present or not. We train and validate our results with the expert labels, shown for each image below:
+For each pixel within each image dataframe, the following information is included: the x and y placement within the image, an expert labeling of either 1, 0, or -1 (cloud, unclear, and no cloud, respectively), red-band radiance measurements from five different angles, the correlation of MISR images of the same scene from different MISR viewing directions (CORR), the standard deviation of the MISR nadir camera pixel values accross a scene (SD), and the normalized difference angular index (NDAI). We train and validate our models with the expert labels, shown for each image below:
 
 \begin{figure}[h]
 \centering
@@ -135,75 +149,75 @@ plotr(image3.plots, image3.plots$label, "right") +
 \label{fig:expert_labels}
 \end{figure}
 
-As we can see in figure 1, the labels for each image present the amorphous grouping of clouds over the polar regions. Additionally, as seen by the green regions separating the blue and the red regions in each image each image, the expert seemed most uncertain at the thresholds between clouds and ice cover.  
-
+As we can see in Figure 1, the labels for each image present an amorphous grouping of clouds over the polar regions. Additionally, as seen by the green regions separating the blue and the red regions in each image, the expert seemed most uncertain at the thresholds between clouds and ice cover in distinguishing between clouds and ice. For the prediction of these labels, we consider the five different radiance measurements, CORR, SD, and NDAI as features for our model. Whether these groupings are realized by the features, and how the features relate to one another based on these labels, is explored next.
 
 \subsubsection{Angle radiance measures}
 
-\begin{wrapfigure}{R}{0.6\textwidth}
+\begin{wrapfigure}{r}{0.6\textwidth}
+  \vspace{-50pt}
   \begin{center}
 <<image_plot100, cache = TRUE, fig.align='center', out.width='0.6\\textwidth'>>=
 suppressMessages(require(ggplot2))
-ggpairs(ones[, 7:11], lower=list(continuous = wrap("smooth", alpha = 0.2, fill = NA)),
+ggpairs(ones[s, 7:11], lower=list(continuous = wrap("smooth", alpha = 0.2, fill = NA)),
         diag=list(continuous="barDiag"),
         upper = list(corSize=20)) + blank_theme_small
 @
-  \caption{Correlations between radiances captured at angles DF, CF, BF, AF, and AN}
   \end{center}
+  \vspace{-20pt}
+  \caption{Correlations between radiances captured at angles DF, CF, BF, AF, and AN for expert labels = 1, subsampled to 10,000}
+  \vspace{-5pt}
 \end{wrapfigure}
 
-In this section we explore the relationship of the different radiance measures based on the different angles: DF, CF, BF, AF, and AN. The most forward-viewing oblique camera is DF and the most aft-viewing oblique camera is AN, with the progression between the two being represented by the degression of the alphabetical labeling. The radiance value distribution and correlations between the different angles is summarized in the figure to the right. Here we see that this change in obliqueness correlates with the correlation between the different angles. Correlation values are much higher between angles that are closer to one-another. This can be attributed to the change in the positioning of the clouds as each angle measure is taken. This phenomena is addressed by {\color{red} cite, name the paper}. While the ground pixels recordings remain rather consitent as the satellite travels over the region, the clouds both naturally shift and are obscured by the angle.
+For each image, we are given radiance measures of the red-band from cameras recording at various angles, named as follows: DF, CF, BF, AF, and AN. The most forward-viewing oblique camera is DF and the most aft-viewing oblique camera is AN, with the progression between the two being represented by the degression of the alphabetical labeling. The radiance value distributions and correlations between the measurements taken at these different angles, for the pixels expertly labeled 1, are summarized in the figure to the right. Here we see that this change in obliqueness correlates with the correlation between the different angles. Correlation values are much higher between angles that are closer to one-another than those that are far apart. This can be attributed to the change in the positioning of the clouds as each angle measure is taken. This phenomena is addressed by {\color{red} cite, name the paper}. While the ground pixels recordings remain rather consitent as the satellite travels over the region, the clouds both naturally shift and are obscured by the angle of measurement. Additionally, in figure 2 we see the distribution of the radiance measures transition to a bimodal distribution as we shift from the forward-viewing oblique camera to the most aft-viewing oblique camera (from DF to AN). As can be seen in figure 3 below, this shift to bimodality is not seen in the distribtutions of the radiance values of the other pixels (those not expertly labeled as -1). 
 
-
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot5, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot5, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = DF, group = label, fill = label), 
                alpha = 0.5) +
-  blank_theme +
+  blank_theme_large +
   theme(legend.position="none")
 @
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot6, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot6, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = CF, group = label, fill = label), 
                alpha = 0.5) +
-  blank_theme +
+  blank_theme_large +
   theme(legend.position="none",
         axis.title.y=element_blank())
 @
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot7, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot7, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = BF, group = label, fill = label), 
                alpha = 0.5)  +
-  blank_theme +
-  guides(color=guide_legend("Label",
-    override.aes = list(size=10))) +
-  theme(axis.title.y=element_blank())
+  blank_theme_large +
+  theme(legend.position="none",
+        axis.title.y=element_blank())
 @
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot8, cache = TRUE>>=
+
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot8, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = AF, group = label, fill = label), 
                alpha = 0.5)  +
-  blank_theme +
-  guides(color=guide_legend("Label",
-    override.aes = list(size=10))) +
-  theme(legend.position="none")
+  blank_theme_large +
+  theme(axis.title.y=element_blank(),
+        legend.position="none")
 @
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot9, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot9, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = AN, group = label, fill = label), 
                alpha = 0.5)  +
-  blank_theme +
+  blank_theme_large +
   guides(color=guide_legend("Label",
     override.aes = list(size=10))) +
   theme(axis.title.y=element_blank())
@@ -214,93 +228,88 @@ ggplot(image1.plots) +
 \end{figure}
 
 
+\subsubsection{NDAI, CORR, and SD measures}
 
+As previously stated, NDAI, CORR, and SD are measurements of the normalized difference angular index, the correlation of MISR images of the same scene from different MISR viewing directions, and the standard deviation of the MISR nadir camera pixel values accross a scene, respectively. We observe their distributions based on expert label, for image 1 and 2, in figures 3 and 4 below.
 
-
-\subsubsection{Additional Features}
-
-
-
-- cloud/nocloud 
-
-
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot10, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot10, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = NDAI, group = label, fill = label), 
                alpha = 0.5) +
-  blank_theme +
+  blank_theme_large +
   theme(legend.position="none")
 @
-\subcaption{NDAI distributions per expert labels}
+\subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot11, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot11, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = CORR, group = label, fill = label), 
                alpha = 0.5) +
-  blank_theme +
+  blank_theme_large +
   theme(legend.position="none",
         axis.title.y=element_blank())
 @
-\subcaption{CORR distributions per expert labels}
+\subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot12, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot12, cache = FALSE>>=
 ggplot(image1.plots) + 
   geom_density(aes(x = SD, group = label, fill = label), 
                alpha = 0.5)  +
-  blank_theme +
+  blank_theme_large +
   guides(color=guide_legend("Label",
-    override.aes = list(size=10))) +
-  theme(axis.title.y=element_blank())
+    override.aes = list(size=20))) +
+  theme(axis.title.y=element_blank()) +
+  scale_x_continuous(breaks = seq(0, 4))
 @
-\subcaption{SD distributions per expert labels}
+\subcaption{}
 \end{subfigure}
 \caption{SD, NDAI, AND CORR distributions for each angle subset by expert label for image 1}
 \label{fig:cloud/nocloud_image1}
 
 \end{figure}
 
+As seen by the separated red and blue peaks in figure 3a and 4a, NDAI seems to distinguish well between cloud and no-cloud pixels for image 1 and 2. Additionally, from these two plots we also see that NDAI values tend to categorize the pixels where the expert was uncertain with the cloud-labeled pixels. As seen by the remaining plots in figures 3 and 4, CORR and SD are not as consistent with their categorization between the cloud and no-cloud pixels between image 1 and 2. While figure 3b shows very similar distributions for all three labels for image 1's CORR values, figure 4b shows pixels labeled 1 and -1 to have two distinct distribution for image 2's CORR values. This means that it may not be best to use CORR as one of the predicting features, since it is inconsistent between images.
 
-
-
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot13, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot13, cache = FALSE>>=
 ggplot(image2.plots) + 
   geom_density(aes(x = NDAI, group = label, fill = label), 
                alpha = 0.5) +
-  blank_theme +
+  blank_theme_large +
   theme(legend.position="none")
 @
-\subcaption{NDAI distributions per expert labels}
+\subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot14, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot14, cache = FALSE>>=
 ggplot(image2.plots) + 
   geom_density(aes(x = CORR, group = label, fill = label), 
                alpha = 0.5) +
-  blank_theme +
+  blank_theme_large +
   theme(legend.position="none",
         axis.title.y=element_blank())
 @
-\subcaption{CORR distributions per expert labels}
+\subcaption{}
 \end{subfigure}
-\begin{subfigure}[t]{0.27\textwidth}
-<<image_plot15, cache = TRUE>>=
+\begin{subfigure}[t]{0.22\textwidth}
+<<image_plot15, cache = FALSE>>=
 ggplot(image2.plots) + 
   geom_density(aes(x = SD, group = label, fill = label), 
                alpha = 0.5)  +
-  blank_theme +
+  blank_theme_large +
   guides(color=guide_legend("Label",
     override.aes = list(size=10))) +
-  theme(axis.title.y=element_blank())
+  theme(axis.title.y=element_blank()) +
+  scale_x_continuous(breaks = seq(0, 4))
 @
-\subcaption{SD distributions per expert labels}
+\subcaption{}
 \end{subfigure}
 \caption{SD, NDAI, and CORR distributions for each angle subset by expert label for image 2}
 \label{fig:cloud/nocloud_image2}
