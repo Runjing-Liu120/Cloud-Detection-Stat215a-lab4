@@ -91,7 +91,7 @@ set_axis_size <- theme(axis.text=element_text(size=axis_element_size),
 # next eight are original features
 # last eight are smoothed features 
 
-path = '../image_data/'
+path = './image_data/'
 
 image1.plots <- load_image(filename = 'image1.txt', path)
 image2.plots <- load_image(filename = 'image2.txt', path)
@@ -385,7 +385,7 @@ As a baseline, we fit a simple logistic regression. We train the model using the
 
 \subsubsection*{LASSO}
 
-<<lasso, cache = TRUE, results = 'hide'>>=
+<<lasso, cache = FALSE, results = 'hide'>>=
 # fit lasso using 2-fold CV on first two images
 lasso_fit <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = FALSE)
 lasso_fit_smo <- get_lasso_fit_2fold_cv(image1, image2, smooth_features = TRUE)
