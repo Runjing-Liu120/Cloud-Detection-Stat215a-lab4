@@ -72,7 +72,7 @@ get_svm_fit_2fold_cv <- function(image1, image2, smooth_features = FALSE,
     cv_result <- c(acc_avg, cost[i])
   }
   
-  # this is hacky but it should work
+  # getting accuracy and costs
   cv_results_vec <- unlist(cv_results)
   accuracies <- cv_results_vec[seq(from = 1, to = length(cv_results_vec), by = 2)]
   costs <- cv_results_vec[seq(from = 2, to = length(cv_results_vec), by = 2)]
