@@ -22,6 +22,7 @@
 \begin{document}
 
 \title{Lab 4 - Cloud Detection}
+\author{Runjing Liu, Rosanna Neuhausler, Nan Yang}
 
 \maketitle
 <<setup, echo = FALSE>>=
@@ -113,7 +114,7 @@ s <- sample(115229, 10000)
 
 \section{Introduction}
 
-In this report, we investigate the application of various statistical and machine learning models for a task in image recognition. Specifically, we apply logistic regression, LASSO, random forest, and support vector machines in distinguishing between pixels representing either cloud or ice cover from satellite imagery. We build on the work presented in {\color{red} cite, name the paper}, which utilizes thresholding on three features of the imagery through an enhanced linear correlation matching (ELCM) algorithm. The images used to train and test our models are from the National Aeronautics and Space Administration's (NASA) Multiangle Imaging SpectroRadiometer (MISR). In light of the climate change-driven melting of the ice caps in the polar regions, it becomes increasingly important and difficult to monitor ice cover remotely, provided feedback effects increasing the frequency of cloud cover. We begin our report with an exploration and analysis of three MISR images and their features.
+In this report, we investigate the application of various statistical and machine learning models for a task in image recognition. Specifically, we apply logistic regression, logistic-LASSO, random forest, and support vector machines in distinguishing between pixels representing either cloud or ice cover from satellite imagery. We build on the work presented in Tau et al.~\cite{shi2008daytime}, which utilizes thresholding on three features of the imagery through an enhanced linear correlation matching (ELCM) algorithm. The images used to train and test our models are from the National Aeronautics and Space Administration's (NASA) Multiangle Imaging SpectroRadiometer (MISR). In light of the climate change-driven melting of the ice caps in the polar regions, it becomes increasingly important and difficult to monitor ice cover remotely, provided feedback effects increasing the frequency of cloud cover. We begin our report with an exploration and analysis of three MISR images and their features.
 
 
 
@@ -121,7 +122,7 @@ In this report, we investigate the application of various statistical and machin
 
 
 
-For each pixel within each image dataframe, the following information is included: the x and y placement within the image, an expert labeling of either 1, 0, or -1 (cloud, unclear, and no cloud, respectively), red-band radiance measurements from five different angles, the correlation of MISR images of the same scene from different MISR viewing directions (CORR), the standard deviation of the MISR nadir camera pixel values accross a scene (SD), and the normalized difference angular index (NDAI). We train and validate our models with the expert labels, shown for each image below:
+For each pixel within each image dataframe, the following information is included: the x and y placement within the image, an expert labeling of either 1, 0, or -1 (cloud, unclear, and no cloud, respectively), red-band radiance measurements from five different angles, the correlation of MISR images of the same scene from different MISR viewing directions (CORR), the standard deviation of the MISR nadir camera pixel values accross a scene (SD), and the normalized difference angular index (NDAI). The expert labels are shown for each image below:
 
 \begin{figure}[h]
 \centering
@@ -145,11 +146,11 @@ plotr(image3.plots, image3.plots$label, "right") +
 @
 \subcaption{expert labeled image 3}
 \end{subfigure}
-\caption{Expert labels of all three images. -1 = no cloud, 0 = unclear, 1 = cloud}
+\caption{Expert labels of all three images. -1 = no cloud, 0 = uncertain, 1 = cloud}
 \label{fig:expert_labels}
 \end{figure}
 
-As we can see in Figure 1, the labels for each image present an amorphous grouping of clouds over the polar regions. Additionally, as seen by the green regions separating the blue and the red regions in each image, the expert seemed most uncertain at the thresholds between clouds and ice cover in distinguishing between clouds and ice. For the prediction of these labels, we consider the five different radiance measurements, CORR, SD, and NDAI as features for our model. Whether these groupings are realized by the features, and how the features relate to one another based on these labels, is explored next.
+As we can see in Figure 1, the labels for each image present an amorphous grouping of clouds over the polar regions. Additionally, as seen by the green regions separating the blue and the red regions in each image, the expert seemed most uncertain at the thresholds between clouds and ice cover. For the prediction of these labels, we consider the five different radiance measurements, CORR, SD, and NDAI as features for our model. Whether these groupings are realized by the features, and how the features relate to one another based on these labels, is explored next.
 
 \subsubsection{Angle radiance measures}
 
@@ -168,7 +169,7 @@ ggpairs(ones[s, 7:11], lower=list(continuous = wrap("smooth", alpha = 0.2, fill 
   \vspace{-5pt}
 \end{wrapfigure}
 
-For each image, we are given radiance measures of the red-band from cameras recording at various angles, named as follows: DF, CF, BF, AF, and AN. The most forward-viewing oblique camera is DF and the most aft-viewing oblique camera is AN, with the progression between the two being represented by the degression of the alphabetical labeling. The radiance value distributions and correlations between the measurements taken at these different angles, for the pixels expertly labeled 1, are summarized in the figure to the right. Here we see that this change in obliqueness correlates with the correlation between the different angles. Correlation values are much higher between angles that are closer to one-another than those that are far apart. This can be attributed to the change in the positioning of the clouds as each angle measure is taken. This phenomena is addressed by {\color{red} cite, name the paper}. While the ground pixels recordings remain rather consitent as the satellite travels over the region, the clouds both naturally shift and are obscured by the angle of measurement. Additionally, in figure 2 we see the distribution of the radiance measures transition to a bimodal distribution as we shift from the forward-viewing oblique camera to the most aft-viewing oblique camera (from DF to AN). As can be seen in figure 3 below, this shift to bimodality is not seen in the distribtutions of the radiance values of the other pixels (those not expertly labeled as -1). 
+For each image, we are given radiance measures of the red-band from cameras recording at various angles, named as follows: DF, CF, BF, AF, and AN. The most forward-viewing oblique camera is DF and the most aft-viewing oblique camera is AN, with the progression between the two being represented by the degression of the alphabetical labeling. The radiance value distributions and correlations between the measurements taken at these different angles, for the pixels expertly labeled 1, are summarized in the figure to the right. Here we see that this change in obliqueness correlates with the correlation between the different angles. Correlation values are much higher between angles that are closer to one-another than those that are far apart. This can be attributed to the change in the positioning of the clouds as each angle measure is taken. This phenomena is addressed by Tau et al.~\cite{shi2008daytime}. While the ground pixels recordings remain rather consitent as the satellite travels over the region, the clouds both naturally shift and are obscured by the angle of measurement. Additionally, in figure 2 we see the distribution of the radiance measures transition to a bimodal distribution as we shift from the forward-viewing oblique camera to the most aft-viewing oblique camera (from DF to AN). As can be seen in figure 3 below, this shift to bimodality is not seen in the distribtutions of the radiance values of the other pixels (those not expertly labeled as -1). 
 
 \begin{figure}[H]
 \centering
@@ -273,7 +274,7 @@ ggplot(image1.plots) +
 
 \end{figure}
 
-As seen by the separated red and blue peaks in figure 3a and 4a, NDAI seems to distinguish well between cloud and no-cloud pixels for image 1 and 2. Additionally, from these two plots we also see that NDAI values tend to categorize the pixels where the expert was uncertain with the cloud-labeled pixels. As seen by the remaining plots in figures 3 and 4, CORR and SD are not as consistent with their categorization between the cloud and no-cloud pixels between image 1 and 2. While figure 3b shows very similar distributions for all three labels for image 1's CORR values, figure 4b shows pixels labeled 1 and -1 to have two distinct distribution for image 2's CORR values. This means that it may not be best to use CORR as one of the predicting features, since it is inconsistent between images.
+As seen by the separated red and blue peaks in figure \ref{fig:cloud/nocloud_image1}a and \ref{fig:cloud/nocloud_image2}a, NDAI seems to distinguish well between cloud and no-cloud pixels for image 1 and 2. Additionally, from these two plots we also see that NDAI values tend to categorize the pixels where the expert was uncertain with the cloud-labeled pixels. As seen by the remaining plots in figures \ref{fig:cloud/nocloud_image1} and \ref{fig:cloud/nocloud_image2}, CORR and SD are not as consistent with their categorization between the cloud and no-cloud pixels between image 1 and 2. While figure 3b shows very similar distributions for all three labels for image 1's CORR values, figure 4b shows pixels labeled 1 and -1 to have two distinct distribution for image 2's CORR values. This means that it may not be best to use CORR as one of the predicting features, since it is inconsistent between images.
 
 \begin{figure}[H]
 \centering
