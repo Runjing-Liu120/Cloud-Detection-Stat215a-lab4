@@ -217,7 +217,6 @@ ggplot(image1.plots) +
 
 
 
-
 \subsubsection{Additional Features}
 
 
@@ -324,7 +323,7 @@ We describe here the four algorithms used: logistic regression, logistic LASSO, 
 \subsection{Logistic regression and LASSO}\label{lasso_descr}
 As a first attempt to predict the expert labels, we fit a logistic regression using the first two images as our training set. 
 
-However, to guard against overfitting, we then tried the logistic LASSO; that is, we run a logistic regression with an $L1$ penalty. The strength of this penalty was chosen by 2-fold cross validation using the first two images, as described in section~\ref{CV_descr} below. By doing LASSO, we hope that the regularization will give us better test accuracy by not overfitting to the training set, and the sparsity has the added benefit of suggesting which features are necessary for the prediction. For example, NDAI was noted in the paper \cite{shi2008daytime} and in our plots above ({\color{red} reference}) to be a potentially informative feature. We hope that this LASSO procedure will detect NDAI and other important features. 
+However, to guard against overfitting, we then tried the logistic LASSO; that is, we run a logistic regression with an $L1$ penalty. The strength of this penalty was chosen by 2-fold cross validation using the first two images, as described in section~\ref{CV_descr} below. By doing LASSO, we hope that the regularization will give us better test accuracy by not overfitting to the training set, and the sparsity has the added benefit of suggesting which features are necessary for the prediction. For example, NDAI was noted in the paper \cite{shi2008daytime} and in our plots above (figure~\ref{fig:cloud/nocloud_image1}a and \ref{fig:cloud/nocloud_image2}a) to be a feature that well separates the two classes. We hope that this LASSO procedure will detect NDAI and other important features. 
 
 
 \subsection{RF}\label{rf_descr}
@@ -354,7 +353,9 @@ We chose to do 2-fold cross-validation since in image data, each pixel is likely
 \section{Results}
 
 \subsection{Predictive accuracy}
-We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines, and compare the benefits, if any, of using the smoothed features instead of the original features. Since we are only doing binary classification, accuracy is measured by the success of predicting the expert labeled pixels; we ignore the unlabeled pixels. Our predictive accuracies are summarized in table~\ref{tab:acc_results}, and figures~\ref{fig:map_orig_features} and \ref{fig:map_smo_features} visually compares the expert labels with the predicted labels. As a comparison, the training accuracy on image 1 is reported in the table \ref{tab:training_accu_results}.
+We present the predictive accuracy of using logistic regression, logistic-LASSO, random forest, and support vector machines, and compare the benefits, if any, of using the smoothed features instead of the original features. Since we are only doing binary classification, accuracy is measured by the success of predicting the expert labeled pixels; we ignore the unlabeled pixels. Our predictive accuracies are summarized in table~\ref{tab:acc_results}, while figures~\ref{fig:map_orig_features} and \ref{fig:map_smo_features} visually compares the expert labels with the predicted labels. 
+
+As a comparison, the training accuracy on image 1 is reported in the table \ref{tab:training_accu_results}; naturally, the training accuracy significantly over-estimatates the testing accuracy. 
 
 \subsubsection*{Logistic regression}
 
@@ -473,7 +474,7 @@ Finally, we examine prediction using an SVM. As described in section \ref{CV_des
 
 Here, we only fit using 3 features: NDAI, CORR, and DF, variables found to be important by the LASSO (see section~\ref{feature_selection}). Using these tree features, the predictive accuacy on the held out third image was \Sexpr{image3_svm_pred$accuracy}; after smoothing these three features, the predictive accuracy was \Sexpr{image3_svm_smo_pred$accuracy}.
 
-<<testing_accuracy, cache = TRUE>>=
+<<training_accuracy, cache = TRUE, results = 'hide'>>=
 
 # predict on the 1st image
 # SVM
@@ -498,7 +499,7 @@ image1_pred_smo <- get_logistic_prediction(logistic_fit_smo, image1.plots)
  \Sexpr{image1_lasso_smo_pred$accuracy}& \Sexpr{image1_rf_smo_pred$accuracy} & \Sexpr{image1_svm_smo_pred$accuracy}\\
  original features & \Sexpr{image1_pred$accuracy} &  \Sexpr{image1_lasso_pred$accuracy} & \Sexpr{image1_rf_pred$accuracy}& \Sexpr{image1_svm_pred$accuracy}
  \end{tabular}
-\caption{Accuracy on training set}
+\caption{Accuracy on image 1, an image that was used for training}
 \label{tab:training_accu_results}
 \end{table}
 
@@ -510,7 +511,7 @@ image1_pred_smo <- get_logistic_prediction(logistic_fit_smo, image1.plots)
  \Sexpr{image3_lasso_smo_pred$accuracy}& \Sexpr{image3_rf_smo_pred$accuracy} & \Sexpr{image3_svm_smo_pred$accuracy}\\
  original features & \Sexpr{image3_pred$accuracy} &  \Sexpr{image3_lasso_pred$accuracy} & \Sexpr{image3_rf_pred$accuracy}& \Sexpr{image3_svm_pred$accuracy}
  \end{tabular}
-\caption{Accuracy on test set}
+\caption{Accuracy on image 3, the image held out for testing. }
 \label{tab:acc_results}
 \end{table}
 
@@ -626,7 +627,7 @@ ggplot(coeff_df) + geom_line(aes(x = log_lambda, y = coefficient, color = name))
 \label{fig:lasso_penalty}
 \end{figure}
 
-We can also get feature importances from the random forest by looking at the mean decrease in Gini coefficient when a node splits on a feature. Hence, we fit a random forest on the first two images using all 16 features, the eight original plus the eight smoothed. From figure~\ref{fig:rf_varImp}, we see that NDAI and smoothed NDAI are the two most important features. This agrees will with figure ({\color{red} reference figure from EDA that shows NDAI splits the classes well}), and the result from the paper ({\color{red} re-read paper, see what they said about NDAI}). 
+We can also get feature importances from the random forest by looking at the mean decrease in Gini coefficient when a node splits on a feature. Hence, we fit a random forest on the first two images using all 16 features, the eight original plus the eight smoothed. From figure~\ref{fig:rf_varImp}, we see that NDAI and smoothed NDAI are the two most important features. This agrees will with figure~\ref{fig:cloud/nocloud_image1}a and the conclusion from the Tau et al.\cite{shi2008daytime} that NDAI well separates the two classes.
 
 \begin{figure}[h]
 \centering
@@ -671,9 +672,42 @@ ggplot(var_imp_df, aes(x = reorder(Features, -Importance), y = Importance)) +
 
 \section{Discussion}
 
-From Figures \ref{fig:map_smo_features} and \ref{fig:map_orig_features}, we notice that in the upper left corner of image 3, there is a region corresponding to expert label +1. (The coordinate \texttt{x} is between 100 and 250, and \texttt{y} is between 200 and 350). All of our 3 algorithms didn't perform well in that region, where they misclassified most of the pixels into -1. 
 
-All of our models were built purely on images 1 and 2, without resorting to image 3 for validation until we produce the report. Assuming that image 3 is representative of future data and independent of image 1 and 2, it would be reasonable to expect a similarly good performance on the forthcoming data sets.
+<<class_accuracies, cache = TRUE>>=
+training_class1_propn <- mean(image12$label == 1)
+training_class_m1_propn <- mean(image12$label == -1)
+
+
+labeled_indx_1 <- which(image3$label == 1)
+labeled_indx_m1 <- which(image3$label == -1)
+
+labeled_indx <- which(image3.plots$label != 0)
+image3_pred <- image3_pred_smo$pred_class[labeled_indx]
+
+acc_on_1 <- mean(image3_pred[labeled_indx_1] == 1)
+acc_on_m1 <- mean(image3_pred[labeled_indx_m1] == -1)
+
+# image3 %>% filter(label == 1) %>%
+#   ggplot() + 
+#     geom_density(aes(x = CORR, 
+#                      group = (label == image3_pred[labeled_indx_1]), 
+#                      fill = (label == image3_pred[labeled_indx_1])), 
+#                  alpha = 0.5) +
+#     blank_theme +
+#     theme(legend.position="none")
+
+@
+
+In this lab, we examine using logistic regression, logistic-LASSO, random forest, and support vector machines to classify pixels in a satilite image as a cloud or as ice. We trained these algorithms on two images, using cross-validation when necessary, and evaluated them on a held out third image. 
+
+In our results, all three algorithms behaved similarly in terms of test accuracy. Our baseline, the logistic regression, obtained about 75\% predictive accuracy on the test set, while random forest did the best at about 84\% accuracy. It did not seem that using smoothed features aided the predictive accuracy; but it is interesting that using them did not hurt either, despite losing local information in the smoothing. 
+
+We also notice that prediction was more accurate for ice than for clouds; for example, the random forest got 88\% of the ice pixels correct in image3, but only 53\% of the cloud pixels correct. This may not be surprising for several reasons. Firstly, there is class imbalance in the training set; of the labeled pixels, 60\% of them are ice, 40\% of them are cloud. With less cloud pixels to train on, it may be harder for the algorithms to predict cloud pixels accurately in the test set. Secondly, examining the density of the angular radiances in figure~\ref{fig:cloud/nocloud_rad_image1}, we remark that the icy pixels have much smaller variance in these features, potentially making them easier to identify. Conversely, the distribution of the features for cloudy pixels is much more spread out, even bimodal in the cases of BF, AF, and AN. Hence, there is more heterogeneity in the cloudy pixels, make them harder to classify. Finally, Tau et al.~\cite{shi2008daytime} remark that this heterogeneity can be attributed to the fact that clouds are non-stationary, and therefore measurements of clouds are noisier. Again, this may contribute the difficulty in predicting cloud cover. 
+
+
+%From Figures \ref{fig:map_smo_features} and \ref{fig:map_orig_features}, we notice that in the upper left corner of image 3, there is a region corresponding to expert label +1. (The coordinate \texttt{x} is between 100 and 250, and \texttt{y} is between 200 and 350). All of our 3 algorithms didn't perform well in that region, where they misclassified most of the pixels into -1. 
+
+All of our models were built purely on images 1 and 2, without opening image 3 for validation until we produce the report. Therefore, we expect that our predictive accuracies, obtained by testing on this held out third image, to be a fair representation of model performance. Assuming that image 3 is representative of future data and independent of image 1 and 2, it would be reasonable then to expect a similarly good performance on forthcoming data sets.
 
 \printbibliography
 \end{document}
