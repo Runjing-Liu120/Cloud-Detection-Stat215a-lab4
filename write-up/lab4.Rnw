@@ -571,11 +571,9 @@ ggplot(var_imp_df, aes(x = reorder(Features, -Importance), y = Importance)) +
 - final model chosen: Show some diagnostic plots or information related to convergence or
 parameter estimation. {\color{red} Figure 4 kinda adresses this for LASSO; I also have a plot showing how CV worked in choosing the optimal penalty in LASSO. Maybe this is enough. }
 
+From Figures \ref{fig:map_smo_features} and \ref{fig:map_orig_features}, we notice that in the upper left corner of image 3, there is a region corresponding to expert label +1. (The coordinate \texttt{x} is between 100 and 250, and \texttt{y} is between 200 and 350). All of our 3 algorithms didn't perform well in that region, where they misclassified most of the pixels into -1. 
 
-For your best classification model(s), do you notice any patterns in the misclassification errors? Again,
-use quantitative and visual methods of analysis. Do you notice problems in particular regions, or in
-specific ranges of feature values?
-6. How well do you think your model will work on future data without expert labels?
+All of our models were built purely on images 1 and 2, without resorting to image 3 for validation until we produce the report. Assuming that image 3 is representative of future data and independent of image 1 and 2, it would be reasonable to expect a similarly good performance on the forthcoming data sets.
 
 \printbibliography
 \end{document}
