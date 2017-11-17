@@ -49,17 +49,20 @@ blank_theme <- theme_minimal(base_size = 30) +
   theme(plot.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        panel.border = element_blank())
+        panel.border = element_blank()) + 
+  theme(axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'))
 
 blank_theme_small <- theme_minimal(base_size = 20) +
   theme(plot.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        panel.border = element_blank())
-        
+        panel.border = element_blank()) + 
+  theme(axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'))
+
 remove_y <-   theme(axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
+
 @
 
 <<load_data, cache = TRUE>>=
@@ -84,18 +87,16 @@ ones <- image1.plots %>%
 @
 
 \section{Introduction}
-In this report, we investigate the application of various statistical and machine learning models for a task in image recognition. Specifically, we apply logistic regression, LASSO, random forest, and support vector machines in distinguishing between pixels representing either cloud or ice cover from satellite imagery. We build on the work presented in {\color{red} cite, name the paper}, which utilizes thresholding on three features of the imagery through an enhanced linear correlation matching (ELCM) algorithm. The images used to train and test our models are from the National Aeronautics and Space Administration's (NASA) Multiangle Imaging SpectroRadiometer (MISR). In light of the climate change-driven melting of the ice caps in the polar regions, it becomes increasingly important and difficult to monitor ice cover remotely, provided feedback effects increasing the frequency of cloud cover.
-We begin our report with an exploration and analysis of three MISR images and their features.
+
+In this report, we investigate the application of various statistical and machine learning models for a task in image recognition. Specifically, we apply logistic regression, LASSO, random forest, and support vector machines in distinguishing between pixels representing either cloud or ice cover from satellite imagery. We build on the work presented in {\color{red} cite, name the paper}, which utilizes thresholding on three features of the imagery through an enhanced linear correlation matching (ELCM) algorithm. The images used to train and test our models are from the National Aeronautics and Space Administration's (NASA) Multiangle Imaging SpectroRadiometer (MISR). In light of the climate change-driven melting of the ice caps in the polar regions, it becomes increasingly important and difficult to monitor ice cover remotely, provided feedback effects increasing the frequency of cloud cover. We begin our report with an exploration and analysis of three MISR images and their features.
+
+
 
 \subsection{Image Properties}
 
-The MISR images 
-Each image dataframe includes the following recordings for each pixel: its x,y placement within the image, an expert labeling of either 1, 0, -1 (cloud, unclear, and no cloud, respectively), red-band radiance measurments from five different angles, the correlation of MISR images of the same scene from different MISR viewing directions (CORR), the standard deviation of the MISR nadir camera pixel values accross a scene (SD), and the normalized difference angular index (NDAI). We consider the five different radiance measurements, CORR, SD, and NDAI as features for our model. 
 
 
-multi-angle and recorded in the red-band
-
-
+Each image dataframe, for each pixel, includes the following recordings: x,y placement within the image, an expert labeling of either 1, 0, or -1 (cloud, unclear, and no cloud, respectively), red-band radiance measurements from five different angles, the correlation of MISR images of the same scene from different MISR viewing directions (CORR), the standard deviation of the MISR nadir camera pixel values accross a scene (SD), and the normalized difference angular index (NDAI). We consider the five different radiance measurements, CORR, SD, and NDAI as features for our model in the prediction of whether a cloud is present or not. We train and validate our results with the expert labels, shown for each image below:
 
 \begin{figure}[h]
 \centering
@@ -103,33 +104,30 @@ multi-angle and recorded in the red-band
 <<image_plot1, cache = TRUE>>=
 plotr(image1.plots, image1.plots$label, "none")
 @
-\subcaption{expert labeled image1}
+\subcaption{expert labeled image 1}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
 <<image_plot2, cache = TRUE>>=
 plotr(image2.plots, image2.plots$label, "none") +
   remove_y
 @
-\subcaption{expert labeled image2}
+\subcaption{expert labeled image 2}
 \end{subfigure}
 \begin{subfigure}[t]{0.3\textwidth}
 <<image_plot3, cache = TRUE>>=
 plotr(image3.plots, image3.plots$label, "right") +
   remove_y
 @
-\subcaption{expert labeled image1}
+\subcaption{expert labeled image 3}
 \end{subfigure}
-\caption{Expertly labeled figures}
+\caption{Expert labels of all three images. -1 = no cloud, 0 = unclear, 1 = cloud}
 \label{fig:expert_labels}
 \end{figure}
 
+As we can see in figure 1, the labels for each image present the amorphous grouping of clouds over the polar regions. Additionally, as seen by the green regions separating the blue and the red regions in each image each image, the expert seemed most uncertain at the thresholds between clouds and ice cover.  
 
 
-\subsubsection{Angles}
-
-
-
-
+\subsubsection{Angle radiance measures}
 
 \begin{wrapfigure}{R}{0.6\textwidth}
   \begin{center}
@@ -137,17 +135,13 @@ plotr(image3.plots, image3.plots$label, "right") +
 suppressMessages(require(ggplot2))
 ggpairs(ones[, 7:11], lower=list(continuous = wrap("smooth", alpha = 0.2, fill = NA)),
         diag=list(continuous="barDiag"),
-        upper = list(corSize=12)) + blank_theme_small
+        upper = list(corSize=20)) + blank_theme_small
 @
+  \caption{Correlations between radiances captured at angles DF, CF, BF, AF, and AN}
   \end{center}
 \end{wrapfigure}
 
-
-
-- Differences between angle radiance
-
-In this section we explore the relationship of the different radiance measures besed on the different angles: DF, CF, BF, AF, and AN. The most forward-viewing oblique camera is DF and the most aft-viewing oblique camera is AN, with the progression between the two being representing by the degression of the alphabetical labeling. The radiance value distribution and correlations between the different angles is summarized in the figure to the right. Here we see that the similarity between the different angle measures is inconsistent. The inconsitency can be attributed to the change in the positioning of the clouds as each angle measure is taken. This issue is addressed by {\color{red} cite, name the paper}. While the ground pixels recordings remain rather consitent as the satellite travels over the region, the clouds both naturally shift and are obscured by the refraction angles.
-
+In this section we explore the relationship of the different radiance measures based on the different angles: DF, CF, BF, AF, and AN. The most forward-viewing oblique camera is DF and the most aft-viewing oblique camera is AN, with the progression between the two being represented by the degression of the alphabetical labeling. The radiance value distribution and correlations between the different angles is summarized in the figure to the right. Here we see that this change in obliqueness correlates with the correlation between the different angles. Correlation values are much higher between angles that are closer to one-another. This can be attributed to the change in the positioning of the clouds as each angle measure is taken. This phenomena is addressed by {\color{red} cite, name the paper}. While the ground pixels recordings remain rather consitent as the satellite travels over the region, the clouds both naturally shift and are obscured by the angle.
 
 
 \begin{figure}[h]
@@ -160,7 +154,6 @@ ggplot(image1.plots) +
   blank_theme +
   theme(legend.position="none")
 @
-\subcaption{expert labeled image1}
 \end{subfigure}
 \begin{subfigure}[t]{0.27\textwidth}
 <<image_plot6, cache = TRUE>>=
@@ -171,7 +164,6 @@ ggplot(image1.plots) +
   theme(legend.position="none",
         axis.title.y=element_blank())
 @
-\subcaption{expert labeled image2}
 \end{subfigure}
 \begin{subfigure}[t]{0.27\textwidth}
 <<image_plot7, cache = TRUE>>=
@@ -183,7 +175,6 @@ ggplot(image1.plots) +
     override.aes = list(size=10))) +
   theme(axis.title.y=element_blank())
 @
-\subcaption{expert labeled image1}
 \end{subfigure}
 \begin{subfigure}[t]{0.27\textwidth}
 <<image_plot8, cache = TRUE>>=
@@ -195,7 +186,6 @@ ggplot(image1.plots) +
     override.aes = list(size=10))) +
   theme(legend.position="none")
 @
-\subcaption{expert labeled image1}
 \end{subfigure}
 \begin{subfigure}[t]{0.27\textwidth}
 <<image_plot9, cache = TRUE>>=
@@ -207,15 +197,22 @@ ggplot(image1.plots) +
     override.aes = list(size=10))) +
   theme(axis.title.y=element_blank())
 @
-\subcaption{expert labeled image1}
 \end{subfigure}
-\caption{Expertly labeled figures}
-\label{fig:cloud/nocloud}
+\caption{Radiance value distributions for each angle subset by expert label for image 1}
+\label{fig:cloud/nocloud_rad_image1}
 \end{figure}
+
+
+
+
+
 
 \subsubsection{Additional Features}
 
+
+
 - cloud/nocloud 
+
 
 \begin{figure}[h]
 \centering
@@ -227,7 +224,7 @@ ggplot(image1.plots) +
   blank_theme +
   theme(legend.position="none")
 @
-\subcaption{expert labeled image1}
+\subcaption{NDAI distributions per expert labels}
 \end{subfigure}
 \begin{subfigure}[t]{0.27\textwidth}
 <<image_plot11, cache = TRUE>>=
@@ -238,7 +235,7 @@ ggplot(image1.plots) +
   theme(legend.position="none",
         axis.title.y=element_blank())
 @
-\subcaption{expert labeled image2}
+\subcaption{CORR distributions per expert labels}
 \end{subfigure}
 \begin{subfigure}[t]{0.27\textwidth}
 <<image_plot12, cache = TRUE>>=
@@ -250,11 +247,53 @@ ggplot(image1.plots) +
     override.aes = list(size=10))) +
   theme(axis.title.y=element_blank())
 @
-\subcaption{expert labeled image1}
+\subcaption{SD distributions per expert labels}
 \end{subfigure}
-\caption{Expertly labeled figures}
-\label{fig:cloud/nocloud 
-}
+\caption{SD, NDAI, AND CORR distributions for each angle subset by expert label for image 1}
+\label{fig:cloud/nocloud_image1}
+
+\end{figure}
+
+
+
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot13, cache = TRUE>>=
+ggplot(image2.plots) + 
+  geom_density(aes(x = NDAI, group = label, fill = label), 
+               alpha = 0.5) +
+  blank_theme +
+  theme(legend.position="none")
+@
+\subcaption{NDAI distributions per expert labels}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot14, cache = TRUE>>=
+ggplot(image2.plots) + 
+  geom_density(aes(x = CORR, group = label, fill = label), 
+               alpha = 0.5) +
+  blank_theme +
+  theme(legend.position="none",
+        axis.title.y=element_blank())
+@
+\subcaption{CORR distributions per expert labels}
+\end{subfigure}
+\begin{subfigure}[t]{0.27\textwidth}
+<<image_plot15, cache = TRUE>>=
+ggplot(image2.plots) + 
+  geom_density(aes(x = SD, group = label, fill = label), 
+               alpha = 0.5)  +
+  blank_theme +
+  guides(color=guide_legend("Label",
+    override.aes = list(size=10))) +
+  theme(axis.title.y=element_blank())
+@
+\subcaption{SD distributions per expert labels}
+\end{subfigure}
+\caption{SD, NDAI, and CORR distributions for each angle subset by expert label for image 2}
+\label{fig:cloud/nocloud_image2}
 \end{figure}
 
 
