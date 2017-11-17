@@ -62,6 +62,17 @@ remove_y <-   theme(axis.title.y=element_blank(),
         axis.ticks.y=element_blank())
 @
 
+<<axis_sizes, cache = TRUE>>=
+title_size <- 25
+axis_title_size <- 20
+axis_element_size <- 20
+
+set_axis_size <- theme(axis.text=element_text(size=axis_element_size), 
+                       axis.title = element_text(size=axis_title_size), 
+                       plot.title = element_text(size=title_size))
+
+@
+
 <<load_data, cache = TRUE>>=
 # first two columns are coordinates
 # third columns are labels
@@ -336,6 +347,39 @@ image3_lasso_smo_pred <- get_lasso_prediction(lasso_fit_smo$fit, image3.plots)
 
 We now examine the success of the LASSO, trained on the first two images with cross validation as described in section~\ref{CV_descr}. The predictive accuracy on the held out third image was \Sexpr{image3_lasso_pred$accuracy} when using the original features, and \Sexpr{image3_lasso_smo_pred$accuracy} when using the smoothed features. Like in the logistic regression, smoothing the features did not appear to make a big difference here. 
 
+{\bf Diagnostic plots for LASSO}: 
+As discussed in section~\ref{CV_descr}, we do 2-fold cross validation to choose the optimal regularization parameter: we fit on image1 and predict on image2, then fit on image2 and predict on image1. The two predictive accuracies are averaged, and we choose the lambda with the highest predictive accuracy. The results of this cross validation is shown in figure~\ref{fig:lasso_cv}. 
+
+Moreover, we also examine the coefficient paths in fitting the LASSO. This is shown in figure~\ref{fig:lasso_penalty}, and discussed in more detail when we consider feature selection below (section~\ref{feature_selection}). 
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}{0.3\textwidth}
+<<lasso_cv, cache = TRUE, fig.height = 4, fig.width = 6>>=
+ggplot() + geom_point(aes(x = log(lasso_fit$cv_results$lambda), 
+                          y = lasso_fit$cv_results$accuracy), 
+                      color = 'blue', size = 0.5) + 
+  ylab('CV classification accuracy') + xlab('log lambda') +
+  geom_vline(xintercept=log(lasso_fit$cv_results$lambda_best)) + set_axis_size
+@
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+<<lasso_smo_cv, cache = TRUE, fig.height = 4, fig.width = 6>>=
+ggplot() + geom_point(aes(x = log(lasso_fit_smo$cv_results$lambda), 
+                          y = lasso_fit_smo$cv_results$accuracy),
+                      color = 'blue', size = 0.5) + 
+  ylab('CV classification accuracy') + xlab('log lambda') +
+  geom_vline(xintercept=log(lasso_fit_smo$cv_results$lambda_best)) + set_axis_size
+@
+\end{subfigure}
+\caption{Cross-validated accuracy as a function of the regularaization parameter $\lambda$ The vertial line indicates the optimal $\lambda$. (a) fitting with the original eight features; (b) fitting on the eight smoothed features}
+\label{fig:lasso_cv}
+\end{figure}
+
+
+
+
+
 \subsubsection*{Random Forest}
 
 <<rf, cache = TRUE, results = 'hide'>>=
@@ -468,16 +512,6 @@ plotr(image3.plots, image3_svm_smo_pred$pred_class, "none") +
 \end{figure}
 
 \subsection{Feature selection}\label{feature_selection}
-<<axis_sizes, cache = TRUE>>=
-title_size <- 25
-axis_title_size <- 20
-axis_element_size <- 20
-
-set_axis_size <- theme(axis.text=element_text(size=axis_element_size), 
-                       axis.title = element_text(size=axis_title_size), 
-                       plot.title = element_text(size=title_size))
-
-@
 
 <<lasso_feat_selection, cache = TRUE, results = 'hide'>>=
 # fit lasso on all 16 features
@@ -568,8 +602,6 @@ ggplot(var_imp_df, aes(x = reorder(Features, -Importance), y = Importance)) +
 
 
 \section{Discussion}
-- final model chosen: Show some diagnostic plots or information related to convergence or
-parameter estimation. {\color{red} Figure 4 kinda adresses this for LASSO; I also have a plot showing how CV worked in choosing the optimal penalty in LASSO. Maybe this is enough. }
 
 From Figures \ref{fig:map_smo_features} and \ref{fig:map_orig_features}, we notice that in the upper left corner of image 3, there is a region corresponding to expert label +1. (The coordinate \texttt{x} is between 100 and 250, and \texttt{y} is between 200 and 350). All of our 3 algorithms didn't perform well in that region, where they misclassified most of the pixels into -1. 
 
